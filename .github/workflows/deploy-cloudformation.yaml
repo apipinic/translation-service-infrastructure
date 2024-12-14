@@ -3,7 +3,7 @@ name: Deploy CloudFormation
 on:
   push:
     branches:
-      - main  # Auslösen bei Änderungen am Hauptbranch
+      - main  # Trigger on pushes to the main branch
 
 jobs:
   deploy:
@@ -14,7 +14,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # 2. AWS CLI konfigurieren
+    # 2. Configure AWS CLI
     - name: Configure AWS CLI
       uses: aws-actions/configure-aws-credentials@v3
       with:
@@ -22,10 +22,15 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    # 3. CloudFormation Stack deployen
+    # 3. Validate CloudFormation Template (Optional but Recommended)
+    - name: Validate CloudFormation template
+      run: |
+        aws cloudformation validate-template --template-body file://template.yaml
+
+    # 4. Deploy CloudFormation Stack
     - name: Deploy CloudFormation stack
       run: |
         aws cloudformation deploy \
-          --template-file template.yaml \  # Ensure the file path is correct
-          --stack-name MyCloudFormationStack \  # Specify the stack name
+          --template-file template.yaml \  # Ensure this file exists at the root
+          --stack-name MyCloudFormationStack \  # Define your stack name here
           --capabilities CAPABILITY_NAMED_IAM
