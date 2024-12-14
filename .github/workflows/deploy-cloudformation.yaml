@@ -1,20 +1,20 @@
-name: Deploy CloudFormation
+name: Deploy SAM Nested Stacks
 
 on:
   push:
     branches:
-      - main  # Trigger on pushes to the main branch
+      - main  # Trigger deployment on push to main branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Checkout Repository
+    # 1. Checkout Code
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # 2. Configure AWS Credentials
+    # 2. Configure AWS CLI
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v3
       with:
@@ -22,12 +22,25 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    # 3. Deploy CloudFormation Stack
-    - name: Deploy to AWS CloudFormation
-      uses: aws-actions/aws-cloudformation-github-deploy@v1
-      with:
-        name: MyEKSStack  # Stack name
-        template: template.yaml  # Path to your template file
-        parameter-overrides: |
-          EKSClusterName=MyEKSCluster,AccountId=${{ secrets.AWS_ACCOUNT_ID }}
-        capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+    # 3. Install AWS SAM CLI
+    - name: Install AWS SAM CLI
+      run: |
+        sudo pip install aws-sam-cli
+
+    # 4. Package SAM Application
+    - name: Package SAM Application
+      run: |
+        sam package \
+          --template-file template.yaml \
+          --output-template-file packaged.yaml \
+          --s3-bucket ${{ secrets.S3_BUCKET }}
+
+    # 5. Deploy SAM Application
+    - name: Deploy SAM Application
+      run: |
+        sam deploy \
+          --template-file packaged.yaml \
+          --stack-name MyEKSStack \
+          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --parameter-overrides \
+            EKSClusterName=MyEKSCluster AccountId=${{ secrets.AWS_ACCOUNT_ID }}
