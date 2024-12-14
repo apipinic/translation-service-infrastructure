@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sam-documentcloud
+
+  Sample SAM Template for sam-documentcloud
+
+Parameters:
+  EKSClusterName:
+    Type: String
+    Description: Name of an EKS Cluster
+
+  AccountId:
+    Type: String
+    Description: The AWS Account ID.
+
+Resources:
+  EKS:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: substacks/eks.yaml
+      Parameters:
+        EKSClusterName: !Ref EKSClusterName
+        AccountId: !Ref AccountId
+
+  OIDC:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: substacks/oidc.yaml
+      Parameters:
+        OIDCProviderURL: !GetAtt EKS.Outputs.OIDCProviderURL
+
+  SERVICE:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: substacks/serviceAccountRole.yaml
+      Parameters:
+        OIDCProviderArn: !GetAtt OIDC.Outputs.OIDCProviderArn
+        OIDCProviderURLWithoutHTTPS: !GetAtt EKS.Outputs.OIDCProviderURLWithoutHTTPS
+
+  S3ANDDB:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: substacks/bucketAndDatabase.yaml
+

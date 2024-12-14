@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to create an IAM role for EKS service account with access to DynamoDB and S3.
+
+Resources:
+  DocumentsBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub "translation-cloud-bucket-project"
+      AccessControl: Private
+
+  DocumentsTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: !Sub "translation-cloud-bucket-project"
+      AttributeDefinitions:
+        - AttributeName: 'UserId'
+          AttributeType: 'S'
+        - AttributeName: 'DocumentId'
+          AttributeType: 'S'
+      KeySchema:
+        - AttributeName: 'UserId'
+          KeyType: 'HASH'
+        - AttributeName: 'DocumentId'
+          KeyType: 'RANGE'
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
