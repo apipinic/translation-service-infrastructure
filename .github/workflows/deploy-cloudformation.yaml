@@ -1,0 +1,31 @@
+name: Deploy CloudFormation
+
+on:
+  push:
+    branches:
+      - main  # Auslösen bei Änderungen am Hauptbranch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Checkout Repository
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # 2. AWS CLI konfigurieren
+    - name: Configure AWS CLI
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    # 3. CloudFormation Stack deployen
+    - name: Deploy CloudFormation stack
+      run: |
+        aws cloudformation deploy \
+          --template-file cloudformation/template.yaml \
+          --stack-name MyCloudFormationStack \
+          --capabilities CAPABILITY_NAMED_IAM
