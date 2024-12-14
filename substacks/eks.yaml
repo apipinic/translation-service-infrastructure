@@ -31,7 +31,7 @@ Parameters:
     Type: String
     #Default: "my-eks-keypair"
     #Default: "it-ops-dev-3"
-    Default: "ors-billing"
+    Default: "cdnlogs"
     Description: Name of an existing EC2 KeyPair to enable SSH access to the instances
 
   EKSClusterName:
