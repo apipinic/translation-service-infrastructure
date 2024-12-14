@@ -22,7 +22,7 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    # 3. Validate CloudFormation Template (Optional but Recommended)
+    # 3. Validate CloudFormation Template
     - name: Validate CloudFormation template
       run: |
         aws cloudformation validate-template --template-body file://template.yaml
@@ -31,7 +31,8 @@ jobs:
     - name: Deploy CloudFormation stack
       run: |
         aws cloudformation deploy \
-          --template-file template.yaml \  # Adjust path if needed
-          --stack-name MyEKSStack \  # Specify your stack name here
+          --template-file template.yaml \  # Ensure correct file path
+          --stack-name MyEKSStack \  # Provide your stack name
           --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
-          --parameter-overrides EKSClusterName=MyEKSCluster AccountId=123456789012
+          --parameter-overrides \
+              EKSClusterName=MyEKSCluster AccountId=${{ secrets.AWS_ACCOUNT_ID }}
