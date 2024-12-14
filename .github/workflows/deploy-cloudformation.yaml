@@ -31,6 +31,7 @@ jobs:
     - name: Deploy CloudFormation stack
       run: |
         aws cloudformation deploy \
-          --template-file template.yaml \  # Ensure this file exists at the root
-          --stack-name MyCloudFormationStack \  # Define your stack name here
-          --capabilities CAPABILITY_NAMED_IAM
+          --template-file template.yaml \  # Adjust path if needed
+          --stack-name MyEKSStack \  # Specify your stack name here
+          --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+          --parameter-overrides EKSClusterName=MyEKSCluster AccountId=123456789012
