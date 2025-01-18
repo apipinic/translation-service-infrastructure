@@ -1,7 +1,9 @@
-name: Build and Push Docker Images to GHCR
+name: Build and Push Docker Images
 
 on:
   push:
+    paths:
+      - 'application/**'
     branches:
       - main
 
@@ -10,25 +12,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Check out the code
+      # 1. Checkout Code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Log in to GitHub Container Registry
+      # 2. Log in to GHCR
       - name: Log in to GitHub Container Registry
-        env:
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-        run: |
-          echo $GHCR_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      # 3. Build and Push Login Service
-      - name: Build and Push Login Service
-        run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/login-service:latest application/login-service
-          docker push ghcr.io/${{ github.repository_owner }}/login-service:latest
-
-      # 4. Build and Push Translation Service
+      # 3. Build and Push Translation Service
       - name: Build and Push Translation Service
+        working-directory: ./application/translation-service
         run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/translation-service:latest application/translation-service
+          docker build -t ghcr.io/${{ github.repository_owner }}/translation-service:latest .
           docker push ghcr.io/${{ github.repository_owner }}/translation-service:latest
+
+      # 4. Build and Push Login Translation Service
+      - name: Build and Push Login Translation Service
+        working-directory: ./application/login-service
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/login-translation-service:latest .
+          docker push ghcr.io/${{ github.repository_owner }}/login-translation-service:latest
