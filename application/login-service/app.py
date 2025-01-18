@@ -1,6 +1,6 @@
-from flask import Flask, render_template, redirect, url_for, request
+from flask import Flask, render_template, redirect, url_for, request, jsonify
 from flask_login import LoginManager, login_user, logout_user, current_user, UserMixin, login_required
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import JWTManager, create_access_token, decode_token
 from oauthlib.oauth2 import WebApplicationClient
 import requests
 import os
@@ -100,9 +100,12 @@ def callback():
         login_user(user)
 
         user_info = {"id": unique_id, "email": users_email}
-        create_access_token(identity=user_info)
+        token = create_access_token(identity=user_info)
 
-        return redirect(url_for("index"))
+        # Redirect to index and set the token as a cookie
+        response = redirect(url_for("index"))
+        response.set_cookie("token", token)
+        return response
     else:
         return "User email not available or not verified by Google.", 400
 
@@ -122,7 +125,9 @@ def index():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for("index"))
+    response = redirect(url_for("index"))
+    response.delete_cookie("token")
+    return response
 
 @app.route("/health")
 def health():
