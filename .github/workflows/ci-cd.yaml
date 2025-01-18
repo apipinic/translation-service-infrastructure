@@ -20,6 +20,15 @@ jobs:
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      # Debugging-Schritt nach Build
+      - name: Debug Environment Variables
+        run: |
+          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}"
+          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}"
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}"
+          echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}"
+
+
       # 3. Build and Push Login Translation Service
       - name: Build and Push Login Translation Service
         working-directory: ./application/login-service
