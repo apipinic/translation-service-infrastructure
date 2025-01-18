@@ -29,11 +29,6 @@ GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "default-client-id")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "default-client-secret")
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
 
-print("GOOGLE_CLIENT_ID:", os.environ.get("GOOGLE_CLIENT_ID"))
-print("GOOGLE_CLIENT_SECRET:", os.environ.get("GOOGLE_CLIENT_SECRET"))
-print("SECRET_KEY:", os.environ.get("SECRET_KEY"))
-print("JWT_SECRET_KEY:", os.environ.get("JWT_SECRET_KEY"))
-
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 
 # User Model
@@ -103,20 +98,17 @@ def callback():
 
         # JWT-Token erstellen (Identity = dict mit ID und Email)
         user_info = {"id": unique_id, "email": users_email}
-        access_token = create_access_token(identity=user_info)
+        create_access_token(identity=user_info)
 
-        # Weiterleitung zum Transcribe-Service mit Token
-        return redirect(f"http://localhost:5001/?token={access_token}")
+        # Weiterleitung zur Index-Seite
+        return redirect(url_for("index"))
     else:
         return "User email not available or not verified by Google.", 400
 
 @app.route("/")
 def index():
     if current_user.is_authenticated:
-        return (
-            f"Hello {current_user.name}! "
-            f"<a href='/logout'>Logout</a>"
-        )
+        return render_template("index.html", username=current_user.name)
     else:
         return render_template("login.html")
 
