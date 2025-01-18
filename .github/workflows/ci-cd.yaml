@@ -1,44 +1,31 @@
-name: CI-CD
+name: Build and Push Docker Images to GHCR
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
-  build-and-deploy:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-    # 1) Check out the repo
-    - name: Check out code
-      uses: actions/checkout@v3
+      # 1. Check out the code
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    # 2) Log in to GitHub Container Registry (GHCR) using GITHUB_TOKEN
-    #    Voraussetzung: "Read and write permissions" für Actions in Repo-Settings
-    - name: Log in to GHCR
-      run: |
-        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+      # 2. Log in to GitHub Container Registry
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-    # 3) Build & Push login-service
-    - name: Build & Push login-service
-      run: |
-        # Image-Name: ghcr.io/<owner>/<repo>/login-service:latest
-        IMAGE_GUI=ghcr.io/${{ github.repository }}/login-service:latest
-        echo "Building $IMAGE_GUI"
-        
-        # Dockerfile liegt in: application/login-service/Dockerfile
-        docker build -t $IMAGE_GUI -f application/login-service/Dockerfile application/login-service
-        
-        # Push to GHCR
-        docker push $IMAGE_GUI
+      # 3. Build and Push Login Service
+      - name: Build and Push Login Service
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/login-service:latest application/login-service
+          docker push ghcr.io/${{ github.repository_owner }}/login-service:latest
 
-    # 4) Build & Push translation-service
-    - name: Build & Push translation-service
-      run: |
-        IMAGE_API=ghcr.io/${{ github.repository }}/translation-service:latest
-        echo "Building $IMAGE_API"
-
-        # Dockerfile liegt in: application/translation-service/Dockerfile
-        docker build -t $IMAGE_API -f application/translation-service/Dockerfile application/translation-service
-        
-        docker push $IMAGE_API
+      # 4. Build and Push Translation Service
+      - name: Build and Push Translation Service
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/translation-service:latest application/translation-service
+          docker push ghcr.io/${{ github.repository_owner }}/translation-service:latest
