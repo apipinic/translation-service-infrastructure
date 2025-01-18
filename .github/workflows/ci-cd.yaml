@@ -20,16 +20,17 @@ jobs:
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      # 3. Build and Push Translation Service
+      # 3. Build and Push Login Translation Service
+      - name: Build and Push Login Translation Service
+        working-directory: ./application/login-service
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/login-translation-service:latest .
+          docker push ghcr.io/${{ github.repository_owner }}/login-translation-service:latest
+
+      # 4. Build and Push Translation Service
       - name: Build and Push Translation Service
         working-directory: ./application/translation-service
         run: |
           docker build -t ghcr.io/${{ github.repository_owner }}/translation-service:latest .
           docker push ghcr.io/${{ github.repository_owner }}/translation-service:latest
 
-      # 4. Build and Push Login Translation Service
-      - name: Build and Push Login Translation Service
-        working-directory: ./application/login-service
-        run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/login-translation-service:latest .
-          docker push ghcr.io/${{ github.repository_owner }}/login-translation-service:latest
