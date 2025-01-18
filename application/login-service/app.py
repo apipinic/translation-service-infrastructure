@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request  # Add 'request'
+from flask import Flask, render_template, redirect, url_for, request
 from flask_login import LoginManager, login_user, logout_user, current_user, UserMixin, login_required
 from flask_jwt_extended import JWTManager, create_access_token
 from oauthlib.oauth2 import WebApplicationClient
@@ -7,7 +7,7 @@ import os
 import json
 import logging
 
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'  # For local development without HTTPS
 
 # Logging configuration
 logging.basicConfig(level=logging.DEBUG)
@@ -32,8 +32,8 @@ GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configura
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 
 # Transcribe and Translate Service URLs
-TRANSCRIBE_URL = os.environ.get("TRANSCRIBE_URL", "http://translation-service-url/transcribe")
-TRANSLATE_LIVE_URL = os.environ.get("TRANSLATE_LIVE_URL", "http://translation-service-url/translate_live")
+TRANSCRIBE_URL = os.environ.get("TRANSCRIBE_URL", "http://translation-service.kundea.svc.cluster.local/transcribe")
+TRANSLATE_LIVE_URL = os.environ.get("TRANSLATE_LIVE_URL", "http://translation-service.kundea.svc.cluster.local/translate_live")
 
 # User Model
 class User(UserMixin):
@@ -55,6 +55,8 @@ def get_google_provider_cfg():
 def login():
     google_provider_cfg = get_google_provider_cfg()
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
+
+    # Dynamically generate the redirect URI
     redirect_uri = url_for("callback", _external=True)
     request_uri = client.prepare_request_uri(
         authorization_endpoint,
@@ -114,7 +116,7 @@ def index():
             translate_live_url=TRANSLATE_LIVE_URL,
         )
     else:
-        return redirect(url_for("login"))
+        return render_template("login.html")
 
 @app.route("/logout")
 @login_required

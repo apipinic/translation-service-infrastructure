@@ -1,33 +1,16 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: application-ingress
+  name: login-ingress
   namespace: kundea
   annotations:
-    nginx.ingress.kubernetes.io/affinity: cookie
-    nginx.ingress.kubernetes.io/session-cookie-hash: sha1
-    nginx.ingress.kubernetes.io/session-cookie-name: route
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx
   rules:
-  - host: aae14ffb9839a4f399de5f527c22373f-1996865126.eu-central-1.elb.amazonaws.com
+  - host: aa4c55383f2be49b1b8aebbcc5e0259a-1787366700.eu-central-1.elb.amazonaws.com
     http:
       paths:
-      - path: /health-login
-        pathType: Prefix
-        backend:
-          service:
-            name: login-service
-            port:
-              number: 80
-      - path: /health-translate
-        pathType: Prefix
-        backend:
-          service:
-            name: translation-service
-            port:
-              number: 80
       - path: /
         pathType: Prefix
         backend:
