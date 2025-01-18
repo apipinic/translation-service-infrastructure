@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Translate Cloud Login</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            width: 350px;
+            background: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .logo {
+            max-width: 200px; /* Logo-Größe */
+            margin-bottom: 15px;
+        }
+        h1 {
+            font-size: 24px;
+            color: #1a202c;
+            margin-bottom: 10px;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        .google-btn {
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            text-transform: uppercase;
+            transition: background-color 0.3s;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .google-btn:hover {
+            background-color: #357ae8;
+        }
+        .google-btn:focus {
+            outline: none;
+        }
+        .footer {
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <!-- Beispielbild einbinden, oder falls nicht vorhanden, entfernen -->
+        <!--<img src="{{ url_for('static', filename='images/translate-logo.png') }}" alt="Translate Cloud Logo" class="logo">-->
+        <h1>Welcome to Translate Cloud</h1>
+        <p>Your AI-powered transcription and translation service. Start transcribing and translating your content with ease!</p>
+        <a href="/login" class="google-btn">Login with Google</a>
+        <div class="footer">
+            © 2024 Translate Cloud. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>

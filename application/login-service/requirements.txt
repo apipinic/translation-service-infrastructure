@@ -1,0 +1,6 @@
+Flask
+Flask-Login
+Flask-JWT-Extended
+oauthlib
+requests
+python-dotenv
