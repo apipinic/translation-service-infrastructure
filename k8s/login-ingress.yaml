@@ -6,17 +6,17 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-    - host: your-lb-hostname
+    - host: aae14ffb9839a4f399de5f527c22373f-1996865126.eu-central-1.elb.amazonaws.com
       http:
         paths:
-          - path: /transcribe
-            pathType: Prefix
+          - path: /transcribe/health
+            pathType: Exact
             backend:
               service:
                 name: transcribe-service
                 port:
                   number: 80
-          - path: /translate_live
+          - path: /transcribe
             pathType: Prefix
             backend:
               service:

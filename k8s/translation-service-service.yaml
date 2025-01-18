@@ -1,14 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: transcribe-service
+  name: translation-service
   namespace: kundea
 spec:
   selector:
     app: translation-service
   ports:
   - protocol: TCP
-    port: 80
-    targetPort: 5002
+    port: 80          # Exposed port
+    targetPort: 5001  # Flask app port
   type: ClusterIP
-
