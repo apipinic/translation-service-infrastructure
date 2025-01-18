@@ -1,5 +1,5 @@
-from flask import Flask, request, redirect, url_for, render_template
-from flask_login import LoginManager, login_user, logout_user, current_user, UserMixin, login_required
+from flask import Flask, render_template, redirect, url_for
+from flask_login import LoginManager, login_user, logout_user, current_user, UserMixin
 from flask_jwt_extended import JWTManager, create_access_token
 from oauthlib.oauth2 import WebApplicationClient
 import requests
@@ -9,27 +9,31 @@ import logging
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
-# Logging konfigurieren
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+# Logging configuration
+logging.basicConfig(level=logging.DEBUG)
 
-# Flask App konfigurieren
+# Flask App Configuration
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "default-secret-key")
 app.config['JWT_SECRET_KEY'] = os.environ.get("JWT_SECRET_KEY", "default-jwt-secret-key")
 
-# JWT-Manager
+# JWT Manager
 jwt = JWTManager(app)
 
 # Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-# Google OAuth2 Konfiguration
+# Google OAuth2 Configuration
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "default-client-id")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "default-client-secret")
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
 
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
+
+# Transcribe and Translate Service URLs
+TRANSCRIBE_URL = os.environ.get("TRANSCRIBE_URL", "http://translation-service-url/transcribe")
+TRANSLATE_LIVE_URL = os.environ.get("TRANSLATE_LIVE_URL", "http://translation-service-url/translate_live")
 
 # User Model
 class User(UserMixin):
@@ -38,7 +42,6 @@ class User(UserMixin):
         self.name = name
         self.email = email
 
-# In-Memory-User-Datenbank
 users = {}
 
 @login_manager.user_loader
@@ -91,16 +94,12 @@ def callback():
         users_name = userinfo_response.json()["given_name"]
         user = User(unique_id, users_name, users_email)
 
-        # User in "Datenbank" speichern
         users[unique_id] = user
-        # Flask-Login-Session
         login_user(user)
 
-        # JWT-Token erstellen (Identity = dict mit ID und Email)
         user_info = {"id": unique_id, "email": users_email}
         create_access_token(identity=user_info)
 
-        # Weiterleitung zur Index-Seite
         return redirect(url_for("index"))
     else:
         return "User email not available or not verified by Google.", 400
@@ -108,9 +107,14 @@ def callback():
 @app.route("/")
 def index():
     if current_user.is_authenticated:
-        return render_template("index.html", username=current_user.name)
+        return render_template(
+            "index.html",
+            username=current_user.name,
+            transcribe_url=TRANSCRIBE_URL,
+            translate_live_url=TRANSLATE_LIVE_URL,
+        )
     else:
-        return render_template("login.html")
+        return redirect(url_for("login"))
 
 @app.route("/logout")
 @login_required
@@ -123,5 +127,4 @@ def health():
     return "OK", 200
 
 if __name__ == "__main__":
-    # Starte auf Port 5000
     app.run(host='0.0.0.0', port=5000, debug=True)

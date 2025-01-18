@@ -24,10 +24,7 @@
             <a class="navbar-brand" href="#">Transcription Service</a>
             <span class="navbar-text">
                 Logged in as: <strong>{{ username }}</strong>
-                <!-- Link zum Logout im Login-Service -->
-                <a href="http://localhost:5000/logout" class="ms-3 btn btn-secondary btn-sm">
-                    Logout
-                </a>
+                <a href="/logout" class="ms-3 btn btn-secondary btn-sm">Logout</a>
             </span>
         </div>
     </nav>
@@ -92,6 +89,10 @@
 
     <!-- JavaScript -->
     <script>
+        // URLs for transcribe and live translation services
+        const TRANSCRIBE_URL = "{{ transcribe_url }}";
+        const TRANSLATE_LIVE_URL = "{{ translate_live_url }}";
+
         // Handle File Upload
         document.getElementById("uploadForm").addEventListener("submit", async (e) => {
             e.preventDefault();
@@ -111,11 +112,7 @@
             formData.append("file", file);
 
             try {
-                const response = await fetch("/transcribe", {
-                    method: "POST",
-                    body: formData,
-                });
-
+                const response = await fetch(TRANSCRIBE_URL, { method: "POST", body: formData });
                 const data = await response.json();
                 if (response.ok) {
                     document.getElementById("file-transcription").innerText = data.transcription;
@@ -155,7 +152,7 @@
 
                 if (e.results[e.results.length - 1].isFinal) {
                     fullTranscription += transcript + "\n";
-                    const response = await fetch("/translate_live", {
+                    const response = await fetch(TRANSLATE_LIVE_URL, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ text: transcript })

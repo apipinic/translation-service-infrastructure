@@ -1,13 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: login-service
+  name: transcribe-service
   namespace: kundea
 spec:
   selector:
-    app: login-service
+    app: translation-service
   ports:
   - protocol: TCP
     port: 80
-    targetPort: 5000
-  type: LoadBalancer
+    targetPort: 5002
+  type: ClusterIP
+

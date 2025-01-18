@@ -14,9 +14,9 @@ spec:
         app: login-service
     spec:
       containers:
-      - name: translation-service
+      - name: login-service
         image: ghcr.io/apipinic/login-translation-service:latest
         ports:
-        - containerPort: 5002
+        - containerPort: 5000  # Correct port for the login service
       imagePullSecrets:
       - name: ghcr-secret  # Reference the secret

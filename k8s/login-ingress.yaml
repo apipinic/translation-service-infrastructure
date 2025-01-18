@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: login-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: your-lb-hostname
+      http:
+        paths:
+          - path: /transcribe
+            pathType: Prefix
+            backend:
+              service:
+                name: transcribe-service
+                port:
+                  number: 80
+          - path: /translate_live
+            pathType: Prefix
+            backend:
+              service:
+                name: transcribe-service
+                port:
+                  number: 80
