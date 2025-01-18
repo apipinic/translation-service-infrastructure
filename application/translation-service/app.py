@@ -6,7 +6,7 @@ from flask_jwt_extended import JWTManager, decode_token
 import subprocess
 import logging
 
-# Configure logging
+# Configure loggingg
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
