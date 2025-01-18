@@ -1,0 +1,44 @@
+name: CI-CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1) Check out the repo
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    # 2) Log in to GitHub Container Registry (GHCR) using GITHUB_TOKEN
+    #    Voraussetzung: "Read and write permissions" für Actions in Repo-Settings
+    - name: Log in to GHCR
+      run: |
+        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+
+    # 3) Build & Push login-service
+    - name: Build & Push login-service
+      run: |
+        # Image-Name: ghcr.io/<owner>/<repo>/login-service:latest
+        IMAGE_GUI=ghcr.io/${{ github.repository }}/login-service:latest
+        echo "Building $IMAGE_GUI"
+        
+        # Dockerfile liegt in: application/login-service/Dockerfile
+        docker build -t $IMAGE_GUI -f application/login-service/Dockerfile application/login-service
+        
+        # Push to GHCR
+        docker push $IMAGE_GUI
+
+    # 4) Build & Push translation-service
+    - name: Build & Push translation-service
+      run: |
+        IMAGE_API=ghcr.io/${{ github.repository }}/translation-service:latest
+        echo "Building $IMAGE_API"
+
+        # Dockerfile liegt in: application/translation-service/Dockerfile
+        docker build -t $IMAGE_API -f application/translation-service/Dockerfile application/translation-service
+        
+        docker push $IMAGE_API
