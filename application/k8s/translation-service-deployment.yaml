@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: translation-service
+  namespace: kundea
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: translation-service
+  template:
+    metadata:
+      labels:
+        app: translation-service
+    spec:
+      containers:
+      - name: translation-service
+        image: ghcr.io/apipinic/translation-service:latest
+        ports:
+        - containerPort: 5002
+      imagePullSecrets:
+      - name: ghcr-secret  # Reference the secret
