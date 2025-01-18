@@ -6,7 +6,7 @@ from flask_jwt_extended import JWTManager, decode_token
 import subprocess
 import logging
 
-# Configure loggingg
+# Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
@@ -48,7 +48,7 @@ def check_jwt():
 
     user_email = extract_user_info()
     if not user_email:
-        # Redirect to login-service if no valid token is provided
+        logging.warning("Invalid or missing token. Redirecting to login-service.")
         login_service_url = os.environ.get("LOGIN_SERVICE_URL", "http://localhost:5000")
         return redirect(login_service_url)
 
@@ -57,7 +57,10 @@ def check_jwt():
 @app.route('/')
 def index():
     username = extract_user_info()
-    return render_template('index.html', username=username)
+    if username:
+        return render_template('index.html', username=username)
+    else:
+        return redirect(os.environ.get("LOGIN_SERVICE_URL", "http://localhost:5000"))
 
 @app.route('/transcribe', methods=['POST'])
 def transcribe():
