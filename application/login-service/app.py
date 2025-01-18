@@ -102,6 +102,10 @@ def callback():
         user_info = {"id": unique_id, "email": users_email}
         token = create_access_token(identity=user_info)
 
+         # Print or log the token
+        print(f"Generated JWT Token: {token}")  # Print the token to the console
+        logging.debug(f"Generated JWT Token: {token}")  # Log the token
+
         # Redirect to index and set the token as a cookie
         response = redirect(url_for("index"))
         response.set_cookie("token", token)
