@@ -6,6 +6,17 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
+# Install curl
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Set build arguments
+ARG JWT_SECRET_KEY
+ARG SECRET_KEY
+
+# Set environment variables
+ENV JWT_SECRET_KEY=$JWT_SECRET_KEY
+ENV SECRET_KEY=$SECRET_KEY
+
 # Setze das Arbeitsverzeichnis
 WORKDIR /app
 
