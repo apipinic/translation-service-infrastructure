@@ -66,7 +66,7 @@ def login():
     google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
 
-    redirect_uri = url_for("callback", _external=True, _scheme="https")  # Force HTTPS
+    redirect_uri = url_for("callback", _external=True, _scheme="https", host='translation-cloud.at')  # Force HTTPS
     request_uri = client.prepare_request_uri(
         authorization_endpoint,
         redirect_uri=redirect_uri,
