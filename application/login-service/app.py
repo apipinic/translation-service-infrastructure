@@ -3,6 +3,7 @@ from flask_login import LoginManager, login_user, logout_user, current_user, Use
 from flask_jwt_extended import JWTManager, create_access_token
 from oauthlib.oauth2 import WebApplicationClient
 from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_cors import CORS
 import requests
 import os
 import json
@@ -14,17 +15,14 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True)  # Enable CORS
 app.secret_key = os.environ.get("SECRET_KEY", "default-secret-key")
 app.config['JWT_SECRET_KEY'] = os.environ.get("JWT_SECRET_KEY", "default-jwt-secret-key")
 
-# --- Best practice for production behind AWS ALB / EKS ---
-# Remove SERVER_NAME to allow ALB to handle the domain:
-# app.config['SERVER_NAME'] = "translation-cloud.at"
-
 # Use secure cookies in production
-app.config['SESSION_COOKIE_SECURE'] = True      # send cookies only via HTTPS
-app.config['SESSION_COOKIE_HTTPONLY'] = True    # prevent JavaScript access
-app.config['SESSION_COOKIE_SAMESITE'] = "Lax"   # or "None" if needed cross-site
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = "Lax"
 
 # If behind a load balancer that terminates HTTPS:
 app.wsgi_app = ProxyFix(
@@ -87,7 +85,6 @@ def login():
     google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
 
-    # Force _scheme="https" if your LB terminates HTTPS and you want the callback to be https:
     redirect_uri = url_for("callback", _external=True, _scheme="https")
     logging.debug(f"Redirect URI for login: {redirect_uri}")
 
@@ -147,7 +144,7 @@ def callback():
                 token,
                 secure=True,
                 httponly=True,
-                samesite="Strict",  # or "None" for cross-site requests
+                samesite="Lax",
             )
             return response
         else:
