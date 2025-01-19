@@ -7,7 +7,6 @@ import os
 import json
 import logging
 
-# Allow insecure transport for local testing
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 # Logging configuration
@@ -17,7 +16,7 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "default-secret-key")
 app.config['JWT_SECRET_KEY'] = os.environ.get("JWT_SECRET_KEY", "default-jwt-secret-key")
-app.config['SERVER_NAME'] = os.environ.get("SERVER_NAME", "translation-cloud.at")  # Set the correct server name
+app.config['SERVER_NAME'] = "translation-cloud.at"  # Set the correct server name
 
 # JWT Manager
 jwt = JWTManager(app)
@@ -50,9 +49,6 @@ users = {}
 def load_user(user_id):
     return users.get(user_id)
 
-def get_google_provider_cfg():
-    return requests.get(GOOGLE_DISCOVERY_URL).json()
-
 @app.before_request
 def enforce_https():
     """Redirect HTTP traffic to HTTPS."""
@@ -60,12 +56,16 @@ def enforce_https():
         url = request.url.replace("http://", "https://", 1)
         return redirect(url, code=301)
 
+@app.before_request
+def log_headers():
+    """Log incoming headers for debugging."""
+    logging.debug(f"Headers: {dict(request.headers)}")
+
 @app.route("/login")
 def login():
-    google_provider_cfg = get_google_provider_cfg()
+    google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
 
-    # Generate the redirect URI dynamically
     redirect_uri = url_for("callback", _external=True, _scheme="https")  # Force HTTPS
     request_uri = client.prepare_request_uri(
         authorization_endpoint,
@@ -77,10 +77,10 @@ def login():
 @app.route("/login/callback")
 def callback():
     code = request.args.get("code")
-    google_provider_cfg = get_google_provider_cfg()
+    google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
     token_endpoint = google_provider_cfg["token_endpoint"]
 
-    redirect_uri = url_for("callback", _external=True, _scheme="https")  # Force HTTPS
+    redirect_uri = url_for("callback", _external=True, _scheme="https")
     token_url, headers, body = client.prepare_token_request(
         token_endpoint,
         authorization_response=request.url,
@@ -110,8 +110,6 @@ def callback():
 
         user_info = {"id": unique_id, "email": users_email}
         token = create_access_token(identity=user_info)
-
-        logging.debug(f"Generated JWT Token: {token}")
 
         response = redirect(url_for("index"))
         response.set_cookie("token", token, secure=True, httponly=True, samesite="Strict")
