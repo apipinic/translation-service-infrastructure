@@ -135,7 +135,7 @@ def callback():
 
             # Create a JWT with user info
             user_info = {"id": unique_id, "email": users_email}
-            token = create_access_token(identity=user_info)
+            token = create_access_token(identity=user_info, additional_claims={"sub": unique_id})
 
             logging.debug(f"User logged in: {user.name}, ID: {user.id}")
             response = redirect(url_for("index"))
