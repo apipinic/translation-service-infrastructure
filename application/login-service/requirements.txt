@@ -4,3 +4,4 @@ Flask-JWT-Extended
 oauthlib
 requests
 python-dotenv
+flask-cors
