@@ -87,7 +87,6 @@
 
     <!-- JavaScript -->
     <script>
-        // Get the token from the cookie
         const tokenCookie = document.cookie.split('; ').find(row => row.startsWith('token='));
         if (!tokenCookie) {
             alert("Token not found! Please login again.");
@@ -97,90 +96,81 @@
             const TRANSCRIBE_URL = "http://translation-service.kundea.svc.cluster.local/transcribe?token=" + token;
             const TRANSLATE_LIVE_URL = "http://translation-service.kundea.svc.cluster.local/translate_live?token=" + token;
 
-
-        // Handle File Upload
-        document.getElementById("uploadForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
-
-            const fileInput = document.getElementById("file");
-            const file = fileInput.files[0];
-            if (!file) {
-                alert("Please select a file!");
-                return;
-            }
-
-            // Show spinner
-            const spinner = document.getElementById("spinner");
-            spinner.style.display = "block";
-
-            const formData = new FormData();
-            formData.append("file", file);
-
-            try {
-                const response = await fetch(TRANSCRIBE_URL, { method: "POST", body: formData });
-                const data = await response.json();
-                if (response.ok) {
-                    document.getElementById("file-transcription").innerText = data.transcription;
-                    document.getElementById("file-translation").innerText = data.translation;
-                } else {
-                    alert(data.error || "An error occurred during transcription.");
+            // Handle File Upload
+            document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const fileInput = document.getElementById("file");
+                const file = fileInput.files[0];
+                if (!file) {
+                    alert("Please select a file!");
+                    return;
                 }
-            } catch (error) {
-                console.error("File Upload Error:", error);
-                alert("Failed to process the file. Please try again.");
-            } finally {
-                spinner.style.display = "none";
-            }
-        });
-
-        // Live Transcription
-        let recognition;
-        let isListening = false;
-        let fullTranscription = "";
-        let fullTranslation = "";
-
-        document.getElementById("start").addEventListener("click", () => {
-            if (isListening) return;
-            isListening = true;
-
-            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.lang = "en-US";
-            recognition.interimResults = true;
-            recognition.continuous = true;
-
-            recognition.onresult = async (e) => {
-                let transcript = "";
-                for (let i = e.resultIndex; i < e.results.length; i++) {
-                    transcript += e.results[i][0].transcript;
-                }
-                document.getElementById("live-transcription").innerText = transcript;
-
-                if (e.results[e.results.length - 1].isFinal) {
-                    fullTranscription += transcript + "\n";
-                    const response = await fetch(TRANSLATE_LIVE_URL, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ text: transcript })
-                    });
+                const spinner = document.getElementById("spinner");
+                spinner.style.display = "block";
+                const formData = new FormData();
+                formData.append("file", file);
+                try {
+                    const response = await fetch(TRANSCRIBE_URL, { method: "POST", body: formData });
                     const data = await response.json();
-                    fullTranslation += data.translation + "\n";
-                    document.getElementById("live-translation").innerText = fullTranslation;
+                    if (response.ok) {
+                        document.getElementById("file-transcription").innerText = data.transcription;
+                        document.getElementById("file-translation").innerText = data.translation;
+                    } else {
+                        alert(data.error || "An error occurred during transcription.");
+                    }
+                } catch (error) {
+                    console.error("File Upload Error:", error);
+                    alert("Failed to process the file. Please try again.");
+                } finally {
+                    spinner.style.display = "none";
                 }
-            };
+            });
 
-            recognition.onend = () => {
-                if (isListening) recognition.start();
-            };
-
-            recognition.start();
-        });
-
-        document.getElementById("stop").addEventListener("click", () => {
-            isListening = false;
-            if (recognition) recognition.stop();
-        });
+            // Live Transcription
+            let recognition;
+            let isListening = false;
+            let fullTranscription = "";
+            let fullTranslation = "";
+            document.getElementById("start").addEventListener("click", () => {
+                if (isListening) return;
+                isListening = true;
+                recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                recognition.lang = "en-US";
+                recognition.interimResults = true;
+                recognition.continuous = true;
+                recognition.onresult = async (e) => {
+                    let transcript = "";
+                    for (let i = e.resultIndex; i < e.results.length; i++) {
+                        transcript += e.results[i][0].transcript;
+                    }
+                    document.getElementById("live-transcription").innerText = transcript;
+                    if (e.results[e.results.length - 1].isFinal) {
+                        fullTranscription += transcript + "\n";
+                        try {
+                            const response = await fetch(TRANSLATE_LIVE_URL, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ text: transcript }),
+                            });
+                            const data = await response.json();
+                            fullTranslation += data.translation + "\n";
+                            document.getElementById("live-translation").innerText = fullTranslation;
+                        } catch (error) {
+                            console.error("Translation API Error:", error);
+                        }
+                    }
+                };
+                recognition.onend = () => {
+                    if (isListening) recognition.start();
+                };
+                recognition.start();
+            });
+            document.getElementById("stop").addEventListener("click", () => {
+                isListening = false;
+                if (recognition) recognition.stop();
+            });
+        }
     </script>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
