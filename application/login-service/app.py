@@ -155,11 +155,22 @@ def index():
 @app.route("/logout")
 @login_required
 def logout():
+    # Benutzer abmelden
     logout_user()
-    response = redirect(url_for("login"))
-    response.delete_cookie("token")
-    logging.debug("User logged out.")
+
+    # Alle Cookies löschen
+    response = redirect(url_for("show_login_page"))  # Leitet zur neuen Login-Seite um
+    response.delete_cookie("token")  # JWT-Token löschen
+    response.delete_cookie("session")  # Session-Cookie löschen
+    logging.debug("User logged out and cookies cleared.")
     return response
+
+
+@app.route("/login-page")
+def show_login_page():
+    """Zeigt die Login-Seite an."""
+    return render_template("login.html")
+
 
 @app.route("/health")
 def health():
