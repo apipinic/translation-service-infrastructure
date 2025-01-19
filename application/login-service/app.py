@@ -1,7 +1,8 @@
 from flask import Flask, render_template, redirect, url_for, request, jsonify
 from flask_login import LoginManager, login_user, logout_user, current_user, UserMixin, login_required
-from flask_jwt_extended import JWTManager, create_access_token, decode_token
+from flask_jwt_extended import JWTManager, create_access_token
 from oauthlib.oauth2 import WebApplicationClient
+from werkzeug.middleware.proxy_fix import ProxyFix
 import requests
 import os
 import json
@@ -17,6 +18,16 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "default-secret-key")
 app.config['JWT_SECRET_KEY'] = os.environ.get("JWT_SECRET_KEY", "default-jwt-secret-key")
 app.config['SERVER_NAME'] = "translation-cloud.at"  # Set the correct server name
+
+# Apply ProxyFix to handle forwarded headers
+app.wsgi_app = ProxyFix(
+    app.wsgi_app,
+    x_for=1,
+    x_proto=1,
+    x_host=1,
+    x_port=1,
+    x_prefix=1,
+)
 
 # JWT Manager
 jwt = JWTManager(app)
@@ -66,7 +77,7 @@ def login():
     google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
 
-    redirect_uri = url_for("callback", _external=True, _scheme="https", host='translation-cloud.at')  # Force HTTPS
+    redirect_uri = url_for("callback", _external=True, _scheme="https")
     request_uri = client.prepare_request_uri(
         authorization_endpoint,
         redirect_uri=redirect_uri,
@@ -142,4 +153,4 @@ def health():
     return "OK Login Service", 200
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000)
