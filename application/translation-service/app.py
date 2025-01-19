@@ -1,9 +1,9 @@
-## Translation Service Container ##
 from flask import Flask, request, jsonify, render_template, redirect
 import whisper
 import os
 from deep_translator import GoogleTranslator
 from flask_jwt_extended import JWTManager, decode_token
+from flask_cors import CORS
 import subprocess
 import logging
 
@@ -19,11 +19,15 @@ if not jwt_secret_key:
     raise RuntimeError("JWT_SECRET_KEY is not set.")
 app.config['JWT_SECRET_KEY'] = jwt_secret_key
 
+# Initialize CORS for HTTPS requests
+CORS(app, resources={r"/*": {"origins": "*"}})
+
 # Initialize JWT manager
 jwt = JWTManager(app)
 
 # Load Whisper model
 model = whisper.load_model("base")
+
 
 def extract_user_info():
     """
@@ -42,6 +46,7 @@ def extract_user_info():
         logging.warning("No token provided in the request.")
     return None
 
+
 @app.before_request
 def check_jwt():
     """
@@ -49,10 +54,14 @@ def check_jwt():
     """
     if request.path.startswith("/static") or request.path == "/health":
         return
+    if request.url.startswith("http://"):
+        logging.error("Insecure HTTP request detected. HTTPS is required.")
+        return jsonify({"error": "HTTPS is required"}), 400
     user_email = extract_user_info()
     if not user_email:
-        login_service_url = os.environ.get("LOGIN_SERVICE_URL", "http://localhost:5000")
+        login_service_url = os.environ.get("LOGIN_SERVICE_URL", "https://localhost:5000")
         return redirect(login_service_url)
+
 
 @app.route('/transcribe', methods=['POST'])
 def transcribe():
@@ -111,6 +120,7 @@ def transcribe():
         logging.error(f"Error during transcription: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/translate_live', methods=['POST'])
 def translate_live():
     """
@@ -149,12 +159,14 @@ def translate_live():
         logging.error(f"Translation Error: {e}")
         return jsonify({"error": "Translation failed due to server error."}), 500
 
+
 @app.route("/health")
 def health():
     """
     Health check endpoint for the service.
     """
     return "OK Translation Service", 200
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5001, debug=True)

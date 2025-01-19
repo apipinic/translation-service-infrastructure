@@ -94,8 +94,8 @@
             window.location.href = "/login"; // Redirect to login if token is missing
         } else {
             const token = tokenCookie.split('=')[1];
-            const TRANSCRIBE_URL = "http://translation-service.kundea.svc.cluster.local/transcribe?token=" + token;
-            const TRANSLATE_LIVE_URL = "http://translation-service.kundea.svc.cluster.local/translate_live?token=" + token;
+            const TRANSCRIBE_URL = "https://translation-service.kundea.svc.cluster.local/transcribe?token=" + token;
+            const TRANSLATE_LIVE_URL = "https://translation-service.kundea.svc.cluster.local/translate_live?token=" + token;
 
             // Handle File Upload
             document.getElementById("uploadForm").addEventListener("submit", async (e) => {

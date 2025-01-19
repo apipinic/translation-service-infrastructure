@@ -48,11 +48,11 @@ client = WebApplicationClient(GOOGLE_CLIENT_ID)
 
 TRANSCRIBE_URL = os.environ.get(
     "TRANSCRIBE_URL",
-    "http://translation-service.kundea.svc.cluster.local/transcribe"
+    "https://translation-service.kundea.svc.cluster.local/transcribe"
 )
 TRANSLATE_LIVE_URL = os.environ.get(
     "TRANSLATE_LIVE_URL",
-    "http://translation-service.kundea.svc.cluster.local/translate_live"
+    "https://translation-service.kundea.svc.cluster.local/translate_live"
 )
 
 class User(UserMixin):
