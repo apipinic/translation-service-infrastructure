@@ -121,7 +121,10 @@ def callback():
 
             login_user(user)
 
-            token = create_access_token(identity={"id": unique_id, "email": users_email})
+            token = create_access_token(
+                identity=unique_id,  # `sub` ist jetzt ein einfacher String (unique_id)
+                additional_claims={"email": users_email}  # E-Mail als zusätzlicher Claim
+            )
 
             logging.debug(f"User logged in: {user.name}, ID: {user.id}")
             response = redirect(url_for("index"))

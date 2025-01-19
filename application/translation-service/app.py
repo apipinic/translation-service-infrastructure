@@ -22,7 +22,7 @@ def extract_user_info():
     if token:
         try:
             decoded = decode_token(token)
-            return decoded.get("identity", {}).get("email")
+            return decoded.get("sub")  # `sub` enthält jetzt die eindeutige Benutzer-ID (String)
         except Exception as e:
             logging.error("Invalid Token: %s", e)
     return None
