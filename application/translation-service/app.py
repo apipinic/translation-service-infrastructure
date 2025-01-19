@@ -22,8 +22,7 @@ def extract_user_info():
     if token:
         try:
             decoded = decode_token(token)
-            if isinstance(decoded["sub"], dict) and "email" in decoded["sub"]:
-                return decoded["sub"]["email"]
+            return decoded.get("identity", {}).get("email")
         except Exception as e:
             logging.error("Invalid Token: %s", e)
     return None

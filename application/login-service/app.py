@@ -9,22 +9,19 @@ import os
 import json
 import logging
 
-# For local development (Insecure Transport) - remove in production
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True)  # Enable CORS
+CORS(app, supports_credentials=True)
 app.secret_key = os.environ.get("SECRET_KEY", "default-secret-key")
 app.config['JWT_SECRET_KEY'] = os.environ.get("JWT_SECRET_KEY", "default-jwt-secret-key")
 
-# Use secure cookies in production
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = "Lax"
 
-# If behind a load balancer that terminates HTTPS:
 app.wsgi_app = ProxyFix(
     app.wsgi_app,
     x_for=1,
@@ -34,7 +31,6 @@ app.wsgi_app = ProxyFix(
     x_prefix=1,
 )
 
-# For handling HTTPS redirection
 app.config['SECURE_PROXY_SSL_HEADER'] = ('X-Forwarded-Proto', 'https')
 
 jwt = JWTManager(app)
@@ -43,14 +39,12 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
-# Google OAuth2 config
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "default-client-id")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "default-client-secret")
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
 
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 
-# Service URLs
 TRANSCRIBE_URL = os.environ.get(
     "TRANSCRIBE_URL",
     "http://translation-service.kundea.svc.cluster.local/transcribe"
@@ -60,14 +54,12 @@ TRANSLATE_LIVE_URL = os.environ.get(
     "http://translation-service.kundea.svc.cluster.local/translate_live"
 )
 
-# Minimal user model and ephemeral store
 class User(UserMixin):
     def __init__(self, id_, name, email):
         self.id = id_
         self.name = name
         self.email = email
 
-# WARNING: ephemeral store, not suitable for production
 users = {}
 
 @login_manager.user_loader
@@ -76,12 +68,10 @@ def load_user(user_id):
 
 @app.before_request
 def log_headers():
-    """Log incoming headers for debugging."""
     logging.debug(f"Headers: {dict(request.headers)}")
 
 @app.route("/login")
 def login():
-    """Initiates Google OAuth2 sign in."""
     google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
 
@@ -97,7 +87,6 @@ def login():
 
 @app.route("/login/callback")
 def callback():
-    """Handles the OAuth2 callback from Google."""
     try:
         code = request.args.get("code")
         google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
@@ -127,15 +116,12 @@ def callback():
             users_email = userinfo_response.json()["email"]
             users_name = userinfo_response.json()["given_name"]
 
-            # Create or retrieve existing user
             user = User(unique_id, users_name, users_email)
             users[unique_id] = user
 
             login_user(user)
 
-            # Create a JWT with user info
-            user_info = {"id": unique_id, "email": users_email}
-            token = create_access_token(identity=user_info, additional_claims={"sub": unique_id})
+            token = create_access_token(identity={"id": unique_id, "email": users_email})
 
             logging.debug(f"User logged in: {user.name}, ID: {user.id}")
             response = redirect(url_for("index"))
