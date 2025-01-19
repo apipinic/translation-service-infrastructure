@@ -65,6 +65,7 @@ def enforce_https():
     """Redirect HTTP traffic to HTTPS."""
     if request.headers.get('X-Forwarded-Proto', 'http') != 'https':
         url = request.url.replace("http://", "https://", 1)
+        logging.debug(f"Redirecting to HTTPS: {url}")
         return redirect(url, code=301)
 
 @app.before_request
@@ -78,6 +79,7 @@ def login():
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
 
     redirect_uri = url_for("callback", _external=True, _scheme="https")
+    logging.debug(f"Redirect URI: {redirect_uri}")
     request_uri = client.prepare_request_uri(
         authorization_endpoint,
         redirect_uri=redirect_uri,
@@ -122,6 +124,7 @@ def callback():
         user_info = {"id": unique_id, "email": users_email}
         token = create_access_token(identity=user_info)
 
+        logging.debug(f"User logged in: {user.name}, ID: {user.id}")
         response = redirect(url_for("index"))
         response.set_cookie("token", token, secure=True, httponly=True, samesite="Strict")
         return response
@@ -130,6 +133,7 @@ def callback():
 
 @app.route("/")
 def index():
+    logging.debug(f"User authenticated: {current_user.is_authenticated}")
     if current_user.is_authenticated:
         return render_template(
             "index.html",
@@ -138,13 +142,13 @@ def index():
             translate_live_url=TRANSLATE_LIVE_URL,
         )
     else:
-        return render_template("login.html")
+        return redirect(url_for("login"))
 
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
-    response = redirect(url_for("index"))
+    response = redirect(url_for("login"))
     response.delete_cookie("token")
     return response
 
