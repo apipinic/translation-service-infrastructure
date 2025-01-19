@@ -1,5 +1,12 @@
 from flask import Flask, render_template, redirect, url_for, request, jsonify
-from flask_login import LoginManager, login_user, logout_user, current_user, UserMixin, login_required
+from flask_login import (
+    LoginManager,
+    login_user,
+    logout_user,
+    current_user,
+    UserMixin,
+    login_required,
+)
 from flask_jwt_extended import JWTManager, create_access_token
 from oauthlib.oauth2 import WebApplicationClient
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -8,19 +15,25 @@ import os
 import json
 import logging
 
-# Aktivieren von unsicherem Transport für lokale Entwicklung (nur für Debugging)
+# For local development (Insecure Transport) - remove in production
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
-# Logging-Konfiguration
 logging.basicConfig(level=logging.DEBUG)
 
-# Flask App Konfiguration
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "default-secret-key")
 app.config['JWT_SECRET_KEY'] = os.environ.get("JWT_SECRET_KEY", "default-jwt-secret-key")
-app.config['SERVER_NAME'] = "translation-cloud.at"  # Setze den korrekten Servernamen
 
-# ProxyFix anwenden, um Header korrekt zu verarbeiten
+# --- Best practice for production behind AWS ALB / EKS ---
+# Remove SERVER_NAME to allow ALB to handle the domain:
+# app.config['SERVER_NAME'] = "translation-cloud.at"
+
+# Use secure cookies in production
+app.config['SESSION_COOKIE_SECURE'] = True      # send cookies only via HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True    # prevent JavaScript access
+app.config['SESSION_COOKIE_SAMESITE'] = "Lax"   # or "None" if needed cross-site
+
+# If behind a load balancer that terminates HTTPS:
 app.wsgi_app = ProxyFix(
     app.wsgi_app,
     x_for=1,
@@ -30,15 +43,13 @@ app.wsgi_app = ProxyFix(
     x_prefix=1,
 )
 
-# JWT Manager initialisieren
 jwt = JWTManager(app)
 
-# Flask-Login Setup
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "login"  # Standardweiterleitung, falls nicht eingeloggt
+login_manager.login_view = "login"
 
-# Google OAuth2 Konfiguration
+# Google OAuth2 config
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "default-client-id")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "default-client-secret")
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
@@ -46,46 +57,46 @@ GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configura
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 
 # Service URLs
-TRANSCRIBE_URL = os.environ.get("TRANSCRIBE_URL", "http://translation-service.kundea.svc.cluster.local/transcribe")
-TRANSLATE_LIVE_URL = os.environ.get("TRANSLATE_LIVE_URL", "http://translation-service.kundea.svc.cluster.local/translate_live")
+TRANSCRIBE_URL = os.environ.get(
+    "TRANSCRIBE_URL",
+    "http://translation-service.kundea.svc.cluster.local/transcribe"
+)
+TRANSLATE_LIVE_URL = os.environ.get(
+    "TRANSLATE_LIVE_URL",
+    "http://translation-service.kundea.svc.cluster.local/translate_live"
+)
 
-# User Model
+# Minimal user model and ephemeral store
 class User(UserMixin):
     def __init__(self, id_, name, email):
         self.id = id_
         self.name = name
         self.email = email
 
+# WARNING: ephemeral store, not suitable for production
 users = {}
 
 @login_manager.user_loader
 def load_user(user_id):
-    user = users.get(user_id)
-    if not user:
-        logging.debug(f"User not found: {user_id}")
-    return user
+    return users.get(user_id)
 
-@app.before_request
-def enforce_https():
-    """Erzwinge HTTPS-Weiterleitung."""
-    if request.headers.get('X-Forwarded-Proto', 'http') != 'https':
-        url = request.url.replace("http://", "https://", 1)
-        logging.debug(f"Redirecting to HTTPS: {url}")
-        return redirect(url, code=301)
+# -- Removed enforce_https() for AWS/EKS behind ALB. Let ALB handle HTTPS. --
 
 @app.before_request
 def log_headers():
-    """Logge eingehende Header für Debugging."""
+    """Log incoming headers for debugging."""
     logging.debug(f"Headers: {dict(request.headers)}")
 
 @app.route("/login")
 def login():
-    """Startet den Google OAuth2 Login-Prozess."""
+    """Initiates Google OAuth2 sign in."""
     google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
 
+    # Force _scheme="https" if your LB terminates HTTPS and you want the callback to be https:
     redirect_uri = url_for("callback", _external=True, _scheme="https")
     logging.debug(f"Redirect URI for login: {redirect_uri}")
+
     request_uri = client.prepare_request_uri(
         authorization_endpoint,
         redirect_uri=redirect_uri,
@@ -95,7 +106,7 @@ def login():
 
 @app.route("/login/callback")
 def callback():
-    """Callback nach erfolgreichem OAuth2-Login."""
+    """Handles the OAuth2 callback from Google."""
     try:
         code = request.args.get("code")
         google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
@@ -124,17 +135,26 @@ def callback():
             unique_id = userinfo_response.json()["sub"]
             users_email = userinfo_response.json()["email"]
             users_name = userinfo_response.json()["given_name"]
-            user = User(unique_id, users_name, users_email)
 
+            # Create or retrieve existing user
+            user = User(unique_id, users_name, users_email)
             users[unique_id] = user
+
             login_user(user)
 
+            # Create a JWT with user info
             user_info = {"id": unique_id, "email": users_email}
             token = create_access_token(identity=user_info)
 
             logging.debug(f"User logged in: {user.name}, ID: {user.id}")
             response = redirect(url_for("index"))
-            response.set_cookie("token", token, secure=True, httponly=True, samesite="Strict")
+            response.set_cookie(
+                "token",
+                token,
+                secure=True,
+                httponly=True,
+                samesite="Strict",  # or "None" if you must do cross-site
+            )
             return response
         else:
             logging.error("User email not verified.")
@@ -169,4 +189,5 @@ def health():
     return "OK Login Service", 200
 
 if __name__ == "__main__":
+    # For local testing you can keep debug=True and host=0.0.0.0
     app.run(host="0.0.0.0", port=5000, debug=True)
