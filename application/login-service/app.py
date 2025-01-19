@@ -144,15 +144,16 @@ def callback():
         return "An error occurred during login.", 500
 
 @app.route("/")
-@login_required
 def index():
-    logging.debug(f"User authenticated: {current_user.is_authenticated}")
-    return render_template(
-        "index.html",
-        username=current_user.name,
-        transcribe_url=TRANSCRIBE_URL,
-        translate_live_url=TRANSLATE_LIVE_URL,
-    )
+    if current_user.is_authenticated:
+        return render_template(
+            "index.html",
+            username=current_user.name,
+            transcribe_url=TRANSCRIBE_URL,
+            translate_live_url=TRANSLATE_LIVE_URL,
+        )
+    else:
+        return redirect(url_for("login"))
 
 @app.route("/logout")
 @login_required
