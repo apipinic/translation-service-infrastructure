@@ -159,18 +159,12 @@ def logout():
     logout_user()
 
     # Alle Cookies löschen
-    response = redirect(url_for("show_login_page"))  # Leitet zur neuen Login-Seite um
+    response = render_template("login.html")  # Login-Seite direkt rendern
+    response = make_response(response)  # Um Header zu setzen
     response.delete_cookie("token")  # JWT-Token löschen
     response.delete_cookie("session")  # Session-Cookie löschen
     logging.debug("User logged out and cookies cleared.")
     return response
-
-
-@app.route("/login-page")
-def show_login_page():
-    """Zeigt die Login-Seite an."""
-    return render_template("login.html")
-
 
 @app.route("/health")
 def health():
