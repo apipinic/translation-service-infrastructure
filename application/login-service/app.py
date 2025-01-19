@@ -1,3 +1,4 @@
+## Login Service Container ##
 from flask import Flask, render_template, redirect, url_for, request, jsonify, make_response
 from flask_login import LoginManager, login_user, logout_user, current_user, UserMixin, login_required
 from flask_jwt_extended import JWTManager, create_access_token
@@ -122,11 +123,14 @@ def callback():
             login_user(user)
 
             token = create_access_token(
-                identity=unique_id,  # `sub` ist jetzt ein einfacher String (unique_id)
-                additional_claims={"email": users_email}  # E-Mail als zusätzlicher Claim
+                identity=unique_id,
+                additional_claims={"email": users_email}
             )
 
-            logging.debug(f"User logged in: {user.name}, ID: {user.id}")
+            # Debugging for JWT token
+            logging.debug(f"Generated JWT Token: {token}")
+            logging.debug(f"Token Payload: Identity={unique_id}, Email={users_email}")
+
             response = redirect(url_for("index"))
             response.set_cookie(
                 "token",
