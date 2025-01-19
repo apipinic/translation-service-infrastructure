@@ -1,12 +1,5 @@
 from flask import Flask, render_template, redirect, url_for, request, jsonify
-from flask_login import (
-    LoginManager,
-    login_user,
-    logout_user,
-    current_user,
-    UserMixin,
-    login_required,
-)
+from flask_login import LoginManager, login_user, logout_user, current_user, UserMixin, login_required
 from flask_jwt_extended import JWTManager, create_access_token
 from oauthlib.oauth2 import WebApplicationClient
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -42,6 +35,9 @@ app.wsgi_app = ProxyFix(
     x_port=1,
     x_prefix=1,
 )
+
+# For handling HTTPS redirection
+app.config['SECURE_PROXY_SSL_HEADER'] = ('X-Forwarded-Proto', 'https')
 
 jwt = JWTManager(app)
 
@@ -79,8 +75,6 @@ users = {}
 @login_manager.user_loader
 def load_user(user_id):
     return users.get(user_id)
-
-# -- Removed enforce_https() for AWS/EKS behind ALB. Let ALB handle HTTPS. --
 
 @app.before_request
 def log_headers():
@@ -153,7 +147,7 @@ def callback():
                 token,
                 secure=True,
                 httponly=True,
-                samesite="Strict",  # or "None" if you must do cross-site
+                samesite="Strict",  # or "None" for cross-site requests
             )
             return response
         else:
@@ -189,5 +183,4 @@ def health():
     return "OK Login Service", 200
 
 if __name__ == "__main__":
-    # For local testing you can keep debug=True and host=0.0.0.0
     app.run(host="0.0.0.0", port=5000, debug=True)
