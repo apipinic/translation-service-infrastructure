@@ -87,7 +87,8 @@
 
     <!-- JavaScript -->
     <script>
-        const tokenCookie = document.cookie.split('; ').find(row => row.startsWith('token='));
+        const tokenCookie = document.cookie.split('; ').find(row => row.trim().startsWith('token='));
+
         if (!tokenCookie) {
             alert("Token not found! Please login again.");
             window.location.href = "/login"; // Redirect to login if token is missing

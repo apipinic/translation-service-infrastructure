@@ -129,7 +129,7 @@ def callback():
                 "token",
                 token,
                 secure=True,
-                httponly=True,
+                httponly=False,
                 samesite="Lax",
             )
             return response
