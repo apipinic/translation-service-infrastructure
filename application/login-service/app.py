@@ -150,7 +150,7 @@ def index():
             translate_live_url=TRANSLATE_LIVE_URL,
         )
     else:
-        return redirect(url_for("login"))
+        return render_template("login.html")
 
 @app.route("/logout")
 @login_required
