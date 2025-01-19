@@ -88,9 +88,15 @@
     <!-- JavaScript -->
     <script>
         // Get the token from the cookie
-        const token = document.cookie.split('; ').find(row => row.startsWith('token=')).split('=')[1];
-        const TRANSCRIBE_URL = "{{ transcribe_url }}?token=" + token;
-        const TRANSLATE_LIVE_URL = "{{ translate_live_url }}?token=" + token;
+        const tokenCookie = document.cookie.split('; ').find(row => row.startsWith('token='));
+        if (!tokenCookie) {
+            alert("Token not found! Please login again.");
+            window.location.href = "/login"; // Redirect to login if token is missing
+        } else {
+            const token = tokenCookie.split('=')[1];
+            const TRANSCRIBE_URL = "http://translation-service.kundea.svc.cluster.local/transcribe?token=" + token;
+            const TRANSLATE_LIVE_URL = "http://translation-service.kundea.svc.cluster.local/translate_live?token=" + token;
+
 
         // Handle File Upload
         document.getElementById("uploadForm").addEventListener("submit", async (e) => {
