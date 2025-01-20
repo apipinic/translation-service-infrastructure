@@ -52,11 +52,9 @@ def check_jwt():
     """
     Verify the JWT token before processing any request, except for allowed paths.
     """
-    if request.path.startswith("/static") or request.path == "/health":
+    allowed_paths = ["/health", "/test_token", "/test"]
+    if any(request.path.startswith(path) for path in allowed_paths):
         return
-    #if request.url.startswith("http://"):
-    #    logging.error("Insecure HTTP request detected. HTTPS is required.")
-    #    return jsonify({"error": "HTTPS is required"}), 400
     user_email = extract_user_info()
     if not user_email:
         login_service_url = os.environ.get("LOGIN_SERVICE_URL", "https://localhost:5000")
