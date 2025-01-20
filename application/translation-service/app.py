@@ -52,7 +52,7 @@ def check_jwt():
     """
     Verify the JWT token before processing any request, except for allowed paths.
     """
-    allowed_paths = ["/health", "/test_token", "/test"]
+    allowed_paths = ["/health", "/test_token", "/test", "/transcribe"]
     if any(request.path.startswith(path) for path in allowed_paths):
         return
     user_email = extract_user_info()
