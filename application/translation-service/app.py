@@ -167,6 +167,28 @@ def health():
     """
     return "OK Translation Service", 200
 
+@app.route('/test_token', methods=['GET'])
+def get_test_token():
+    """
+    Generate a test JWT token for local testing.
+    """
+    from flask_jwt_extended import create_access_token
+    test_payload = {
+        "sub": "test_user",
+        "email": "test_user@example.com"
+    }
+    token = create_access_token(identity=test_payload)
+    logging.info(f"Generated Test Token: {token}")
+    return jsonify({"token": token}), 200
+
+
+@app.route('/test', methods=['GET'])
+def test_endpoint():
+    """
+    A temporary endpoint for testing connectivity and bypassing auth.
+    """
+    return jsonify({"message": "Test endpoint working"}), 200
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5001, debug=True)

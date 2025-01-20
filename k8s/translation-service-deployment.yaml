@@ -17,6 +17,6 @@ spec:
       - name: translation-service
         image: ghcr.io/apipinic/translation-service:latest
         ports:
-        - containerPort: 5001  # Correct port for the login service
+        - containerPort: 5001  # Correct port for the translation service
       imagePullSecrets:
       - name: ghcr-secret  # Reference the secret
