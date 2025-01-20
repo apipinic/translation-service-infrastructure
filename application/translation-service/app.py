@@ -172,10 +172,10 @@ def get_test_token():
     """
     from flask_jwt_extended import create_access_token
     test_payload = {
-        "sub": "test_user",
+        "sub": "test_user",  # Ensure this is a string
         "email": "test_user@example.com"
     }
-    token = create_access_token(identity=test_payload)
+    token = create_access_token(identity="test_user")  # Pass `sub` as a string
     logging.info(f"Generated Test Token: {token}")
     return jsonify({"token": token}), 200
 
