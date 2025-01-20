@@ -1,20 +1,48 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: login-ingress
+  name: translation-ingress
   namespace: kundea
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-set-headers: "custom-headers"
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - translation-cloud.at
+      secretName: translation-cloud-tls-secret
   rules:
-  - host: aa4c55383f2be49b1b8aebbcc5e0259a-1787366700.eu-central-1.elb.amazonaws.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: login-service
-            port:
-              number: 80
+    - host: translation-cloud.at
+      http:
+        paths:
+          - path: /  # Verwende nur "/" ohne RegEx
+            pathType: Prefix
+            backend:
+              service:
+                name: translation-service
+                port:
+                  number: 80
+          - path: /transcribe
+            pathType: Prefix
+            backend:
+              service:
+                name: translation-service
+                port:
+                  number: 80
+          - path: /translate_live
+            pathType: Prefix
+            backend:
+              service:
+                name: translation-service
+                port:
+                  number: 80
+          - path: /health
+            pathType: Prefix
+            backend:
+              service:
+                name: translation-service
+                port:
+                  number: 80

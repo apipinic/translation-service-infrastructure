@@ -8,6 +8,6 @@ spec:
     app: translation-service
   ports:
   - protocol: TCP
-    port: 80          # Exposed port
-    targetPort: 5001  # Flask app port
-  type: ClusterIP
+    port: 443  # Use 443 for HTTPS
+    targetPort: 5001
+  type: LoadBalancer
