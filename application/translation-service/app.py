@@ -52,13 +52,21 @@ def check_jwt():
     """
     Verify the JWT token before processing any request, except for allowed paths.
     """
-    allowed_paths = ["/health", "/test_token", "/test", "/transcribe"]
+    allowed_paths = ["/health", "/test_token", "/test", "/", "/transcribe"]
     if any(request.path.startswith(path) for path in allowed_paths):
         return
     user_email = extract_user_info()
     if not user_email:
         login_service_url = os.environ.get("LOGIN_SERVICE_URL", "https://localhost:5000")
         return redirect(login_service_url)
+
+
+@app.route("/")
+def index():
+    """
+    Render the main interface for transcription.
+    """
+    return render_template("index.html")
 
 
 @app.route('/transcribe', methods=['POST'])
@@ -119,73 +127,12 @@ def transcribe():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/translate_live', methods=['POST'])
-def translate_live():
-    """
-    Handle live text translation.
-    """
-    try:
-        # Validate token
-        token = request.args.get('token')
-        if not token:
-            logging.warning("No token found in the request.")
-            return jsonify({"error": "Token is missing"}), 401
-
-        user_email = extract_user_info()
-        if not user_email:
-            logging.error("Token validation failed or user email is missing.")
-            return jsonify({"error": "Invalid token"}), 401
-
-        # Log the user making the request
-        logging.info(f"Live translation request by user: {user_email}")
-
-        # Parse input text
-        data = request.get_json()
-        text = data.get("text", "").strip()
-        if not text:
-            logging.warning("Empty input text provided for translation.")
-            return jsonify({"error": "Empty input text"}), 400
-
-        # Translate the text
-        translation = GoogleTranslator(source='en', target='de').translate(text)
-        logging.info(f"Live Translation result: {translation}")
-
-        # Return the result
-        return jsonify({"translation": translation})
-
-    except Exception as e:
-        logging.error(f"Translation Error: {e}")
-        return jsonify({"error": "Translation failed due to server error."}), 500
-
-
 @app.route("/health")
 def health():
     """
     Health check endpoint for the service.
     """
     return "OK Translation Service", 200
-
-@app.route('/test_token', methods=['GET'])
-def get_test_token():
-    """
-    Generate a test JWT token for local testing.
-    """
-    from flask_jwt_extended import create_access_token
-    test_payload = {
-        "sub": "test_user",  # Ensure this is a string
-        "email": "test_user@example.com"
-    }
-    token = create_access_token(identity="test_user")  # Pass `sub` as a string
-    logging.info(f"Generated Test Token: {token}")
-    return jsonify({"token": token}), 200
-
-
-@app.route('/test', methods=['GET'])
-def test_endpoint():
-    """
-    A temporary endpoint for testing connectivity and bypassing auth.
-    """
-    return jsonify({"message": "Test endpoint working"}), 200
 
 
 if __name__ == '__main__':

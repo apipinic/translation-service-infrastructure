@@ -1,4 +1,3 @@
-## Login Service Container ##
 from flask import Flask, render_template, redirect, url_for, request, jsonify, make_response
 from flask_login import LoginManager, login_user, logout_user, current_user, UserMixin, login_required
 from flask_jwt_extended import JWTManager, create_access_token
@@ -10,19 +9,24 @@ import os
 import json
 import logging
 
+# Enable OAuth for development over HTTP
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
+# Logging setup
 logging.basicConfig(level=logging.DEBUG)
 
+# Initialize Flask app
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 app.secret_key = os.environ.get("SECRET_KEY", "default-secret-key")
 app.config['JWT_SECRET_KEY'] = os.environ.get("JWT_SECRET_KEY", "default-jwt-secret-key")
 
+# Secure session cookies
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = "Lax"
 
+# Proxy settings for HTTPS
 app.wsgi_app = ProxyFix(
     app.wsgi_app,
     x_for=1,
@@ -34,26 +38,26 @@ app.wsgi_app = ProxyFix(
 
 app.config['SECURE_PROXY_SSL_HEADER'] = ('X-Forwarded-Proto', 'https')
 
+# JWT setup
 jwt = JWTManager(app)
 
+# Flask-Login setup
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
+# Google OAuth setup
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "default-client-id")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "default-client-secret")
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
-
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 
-TRANSCRIBE_URL = os.environ.get(
-    "TRANSCRIBE_URL",
-    "https://translation-cloud.at/transcribe"
-)
-TRANSLATE_LIVE_URL = os.environ.get(
-    "TRANSLATE_LIVE_URL",
-    "https://translation-cloud.at/translate_live"
-)
+# Environment variables for translation service
+TRANSCRIBE_URL = os.environ.get("TRANSCRIBE_URL", "https://translation-cloud.at/transcribe")
+
+# User storage
+users = {}
+
 
 class User(UserMixin):
     def __init__(self, id_, name, email):
@@ -61,15 +65,16 @@ class User(UserMixin):
         self.name = name
         self.email = email
 
-users = {}
 
 @login_manager.user_loader
 def load_user(user_id):
     return users.get(user_id)
 
+
 @app.before_request
 def log_headers():
     logging.debug(f"Headers: {dict(request.headers)}")
+
 
 @app.route("/login")
 def login():
@@ -85,6 +90,7 @@ def login():
         scope=["openid", "email", "profile"],
     )
     return redirect(request_uri)
+
 
 @app.route("/login/callback")
 def callback():
@@ -147,35 +153,45 @@ def callback():
         logging.error(f"Error during login callback: {e}")
         return "An error occurred during login.", 500
 
+
 @app.route("/")
 def index():
-    if current_user.is_authenticated:
-        return render_template(
-            "index.html",
-            username=current_user.name,
-            transcribe_url=TRANSCRIBE_URL,
-            translate_live_url=TRANSLATE_LIVE_URL,
-        )
+    access_token = request.cookies.get("token")  # Retrieve token from cookies
+    logging.debug(f"Access token on homepage: {access_token}")
+    logging.debug(f"User authenticated: {current_user.is_authenticated}")
+    
+    if current_user.is_authenticated and access_token:
+        # Redirect to /transcribe
+        transcribe_url = f"{url_for('transcribe', _external=True)}?token={access_token}"
+        logging.debug(f"Redirecting to transcribe URL: {transcribe_url}")
+        return redirect(transcribe_url)
     else:
         return render_template("login.html")
+
+
+@app.route("/transcribe", methods=["GET"])
+@login_required
+def transcribe():
+    # Render the transcribe page
+    return render_template("index.html", username=current_user.name, transcribe_url=TRANSCRIBE_URL)
+
 
 @app.route("/logout")
 @login_required
 def logout():
-    # Benutzer abmelden
     logout_user()
-
-    # Alle Cookies löschen
-    response = render_template("login.html")  # Login-Seite direkt rendern
-    response = make_response(response)  # Um Header zu setzen
-    response.delete_cookie("token")  # JWT-Token löschen
-    response.delete_cookie("session")  # Session-Cookie löschen
+    response = render_template("login.html")
+    response = make_response(response)
+    response.delete_cookie("token")  # JWT token
+    response.delete_cookie("session")  # Session cookie
     logging.debug("User logged out and cookies cleared.")
     return response
+
 
 @app.route("/health")
 def health():
     return "OK Login Service", 200
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

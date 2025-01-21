@@ -46,6 +46,13 @@ spec:
                 name: translation-service
                 port:
                   number: 5001
+          - path: c # Separate health check for translation-service
+            pathType: Prefix
+            backend:
+              service:
+                name: translation-service
+                port:
+                  number: 5001
           - path: /translation/health # Separate health check for translation-service
             pathType: Prefix
             backend:

@@ -1,34 +1,36 @@
-# Basis-Image mit Python
+# Base image with Python
 FROM python:3.9-slim
 
-# Installiere Systemabhängigkeiten
-RUN apt-get update && apt-get install -y \
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install curl
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+    curl \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set build arguments
 ARG JWT_SECRET_KEY
 ARG SECRET_KEY
 
 # Set environment variables
-ENV JWT_SECRET_KEY=$JWT_SECRET_KEY
-ENV SECRET_KEY=$SECRET_KEY
+ENV JWT_SECRET_KEY=${JWT_SECRET_KEY}
+ENV SECRET_KEY=${SECRET_KEY}
 
-# Setze das Arbeitsverzeichnis
+# Set working directory
 WORKDIR /app
 
-# Kopiere requirements und installiere Python-Abhängigkeiten
+# Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Kopiere den gesamten Code in den Container
+# Copy the entire application code into the container
 COPY . .
 
-# Exponiere den Port
-EXPOSE 5000
+# Expose the correct application port
+EXPOSE 5001
 
-# Starte die Applikation
+# Health check to ensure container is running
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
+    CMD curl -f http://localhost:5001/health || exit 1
+
+# Start the application
 CMD ["python", "app.py"]
