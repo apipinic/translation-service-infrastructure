@@ -167,7 +167,7 @@ def index():
             # Validate token
             decoded_token = decode_token(access_token)
             logging.debug(f"Decoded token: {decoded_token}")
-            user_id = decoded_token["sub"]  # `sub` is now a unique ID (string)
+            user_id = decoded_token["sub"]  # `sub` is now the unique ID (string)
             return f"<h1>Willkommen, Benutzer mit ID: {user_id}!</h1>"
         except Exception as e:
             logging.error(f"Invalid token: {e}")
