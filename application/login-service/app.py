@@ -103,7 +103,7 @@ def callback():
     logging.debug(f"Authorization code received: {code}")
     google_provider_cfg = get_google_provider_cfg()
     token_endpoint = google_provider_cfg["token_endpoint"]
-    redirect_uri = url_for("callback", _external=True, _scheme='https' if request.is_secure else 'http')
+    redirect_uri = url_for("callback", _external=True, _scheme="https")
     token_url, headers, body = client.prepare_token_request(
         token_endpoint,
         authorization_response=request.url,
@@ -120,40 +120,37 @@ def callback():
     client.parse_request_body_response(json.dumps(token_response.json()))
     userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
     uri, headers, body = client.add_token(userinfo_endpoint)
-    userinfo_response = requests.get(uri, headers=headers, data=body)
+    userinfo_response = requests.get(uri, headers=headers)
     logging.debug(f"User info received: {userinfo_response.json()}")
 
     if userinfo_response.json().get("email_verified"):
         unique_id = userinfo_response.json()["sub"]
         users_email = userinfo_response.json()["email"]
         users_name = userinfo_response.json()["given_name"]
+
+        # Create user
         user = User(unique_id, users_name, users_email)
-        users[unique_id] = user  # Save the user
-        login_user(user, remember=True)
-        logging.debug(f"User logged in: {unique_id}")
+        users[unique_id] = user
+        login_user(user)
 
-        # JWT Token generation
-        user_info = {
-            "id": unique_id,
-            "name": users_name,
-            "email": users_email,
-        }
-        access_token = create_access_token(identity=user_info)
-        logging.debug(f"JWT token issued for user {unique_id}.")
+        # JWT Token
+        access_token = create_access_token(identity={"id": unique_id, "email": users_email})
+        logging.debug(f"JWT token generated: {access_token}")
 
-        # Set token in cookies
+        # Set token in cookie
         response = redirect(url_for("index"))
         response.set_cookie(
             "token",
             access_token,
-            secure=True,  # Set to True in production
+            secure=True,
             httponly=True,
             samesite="Lax",
+            domain="translation-cloud.at"
         )
         return response
     else:
-        logging.error("User email not verified by Google.")
-        return "User email not available or not verified by Google.", 400
+        logging.error("User email not verified.")
+        return "User email not verified by Google.", 400
 
 
 @app.route("/")
