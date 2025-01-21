@@ -52,9 +52,6 @@ GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "default-client-se
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 
-# Environment variables for translation service
-TRANSCRIBE_URL = os.environ.get("TRANSCRIBE_URL", "https://translation-cloud.at/transcribe")
-
 # User storage
 users = {}
 
@@ -162,9 +159,8 @@ def index():
     
     if current_user.is_authenticated and access_token:
         # Redirect to /transcribe
-        transcribe_url = f"{url_for('transcribe', _external=True)}?token={access_token}"
-        logging.debug(f"Redirecting to transcribe URL: {transcribe_url}")
-        return redirect(transcribe_url)
+        logging.debug(f"Redirecting to /transcribe")
+        return redirect(url_for("transcribe"))
     else:
         return render_template("login.html")
 
@@ -173,7 +169,7 @@ def index():
 @login_required
 def transcribe():
     # Render the transcribe page
-    return render_template("index.html", username=current_user.name, transcribe_url=TRANSCRIBE_URL)
+    return render_template("index.html", username=current_user.name)
 
 
 @app.route("/logout")
