@@ -134,8 +134,8 @@ def callback():
             users[unique_id] = user
             login_user(user)
 
-            # JWT Token
-            access_token = create_access_token(identity={"id": unique_id, "email": users_email})
+            # JWT Token (nutze eindeutige ID als `sub`)
+            access_token = create_access_token(identity=unique_id)
             logging.debug(f"JWT token generated: {access_token}")
 
             # Set token in cookie
@@ -156,7 +156,6 @@ def callback():
         logging.error(f"Error during login callback: {e}")
         return render_template("error.html", error="Login fehlgeschlagen.")
 
-
 @app.route("/")
 def index():
     access_token = request.cookies.get("token")  # JWT-Token aus Cookies abrufen
@@ -167,8 +166,8 @@ def index():
             # Token-Validierung
             decoded_token = decode_token(access_token)
             logging.debug(f"Decoded token: {decoded_token}")
-            user_email = decoded_token["sub"]["email"]
-            return f"<h1>Willkommen, {user_email}!</h1>"
+            user_id = decoded_token["sub"]  # `sub` ist jetzt eine eindeutige ID (z. B. Google `sub`)
+            return f"<h1>Willkommen, Benutzer mit ID: {user_id}!</h1>"
         except Exception as e:
             logging.error(f"Invalid token: {e}")
             # Ungültiges Token -> Zur Login-Seite zurück
@@ -176,7 +175,6 @@ def index():
     else:
         # Kein Token vorhanden -> Login-Seite anzeigen
         return render_template("login.html")
-
 
 @app.route("/logout")
 @login_required
