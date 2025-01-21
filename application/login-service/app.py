@@ -97,77 +97,71 @@ def login():
 
 @app.route("/login/callback")
 def callback():
-    try:
-        code = request.args.get("code")
-        google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
-        token_endpoint = google_provider_cfg["token_endpoint"]
+    code = request.args.get("code")
+    logging.debug(f"Authorization code received: {code}")
+    google_provider_cfg = get_google_provider_cfg()
+    token_endpoint = google_provider_cfg["token_endpoint"]
+    redirect_uri = url_for('callback', _external=True, _scheme='https' if request.is_secure else 'http')
+    token_url, headers, body = client.prepare_token_request(
+        token_endpoint,
+        authorization_response=request.url,
+        redirect_url=redirect_uri,
+        code=code
+    )
+    token_response = requests.post(
+        token_url,
+        headers=headers,
+        data=body,
+        auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
+    )
+    logging.debug(f"Token response received: {token_response.json()}")
+    client.parse_request_body_response(json.dumps(token_response.json()))
+    userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
+    uri, headers, body = client.add_token(userinfo_endpoint)
+    userinfo_response = requests.get(uri, headers=headers, data=body)
+    logging.debug(f"User info received: {userinfo_response.json()}")
 
-        redirect_uri = url_for("callback", _external=True, _scheme="https")
-        token_url, headers, body = client.prepare_token_request(
-            token_endpoint,
-            authorization_response=request.url,
-            redirect_url=redirect_uri,
-            code=code
-        )
-        token_response = requests.post(
-            token_url,
-            headers=headers,
-            data=body,
-            auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
-        )
-        client.parse_request_body_response(json.dumps(token_response.json()))
+    if userinfo_response.json().get("email_verified"):
+        unique_id = userinfo_response.json()["sub"]
+        users_email = userinfo_response.json()["email"]
+        picture = userinfo_response.json()["picture"]
+        users_name = userinfo_response.json()["given_name"]
+        user = User(unique_id, users_name, users_email, picture)
+        users[unique_id] = user  # Save the user
+        login_user(user, remember=True)
+        logging.debug(f"User logged in: {unique_id}")
 
-        userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
-        uri, headers, body = client.add_token(userinfo_endpoint)
-        userinfo_response = requests.get(uri, headers=headers)
+        # JWT Token generation
+        user_info = {
+            "id": unique_id,
+            "name": users_name,
+            "email": users_email,
+            "profile_pic": picture
+        }
+        access_token = create_access_token(identity=user_info)
+        logging.debug(f"JWT token issued for user {unique_id}.")
 
-        if userinfo_response.json().get("email_verified"):
-            unique_id = userinfo_response.json()["sub"]
-            users_email = userinfo_response.json()["email"]
-            users_name = userinfo_response.json()["given_name"]
-
-            user = User(unique_id, users_name, users_email)
-            users[unique_id] = user
-
-            login_user(user)
-
-            token = create_access_token(
-                identity=unique_id,
-                additional_claims={"email": users_email}
-            )
-
-            # Debugging for JWT token
-            logging.debug(f"Generated JWT Token: {token}")
-            logging.debug(f"Token Payload: Identity={unique_id}, Email={users_email}")
-
-            response = redirect(url_for("index"))
-            response.set_cookie(
-                "token",
-                token,
-                secure=True,
-                httponly=False,
-                samesite="Lax",
-            )
-            return response
-        else:
-            logging.error("User email not verified.")
-            return "User email not available or not verified by Google.", 400
-    except Exception as e:
-        logging.error(f"Error during login callback: {e}")
-        return "An error occurred during login.", 500
+        # Forward to Translation-Service (index.html)
+        translation_service_url = os.environ.get("TRANSLATION_SERVICE_URL", "http://translation-service:5001")
+        return redirect(f"{translation_service_url}/?token={access_token}")
+    else:
+        logging.error("User email not verified by Google.")
+        return "User email not available or not verified by Google.", 400
 
 
 @app.route("/")
 def index():
     access_token = request.cookies.get("token")  # Retrieve token from cookies
     logging.debug(f"Access token on homepage: {access_token}")
-    logging.debug(f"User authenticated: {current_user.is_authenticated}")
     
-    if current_user.is_authenticated and access_token:
-        transcribe_url =  f"{request.url_root}transcribe?token={access_token}"
-        logging.debug(f"Redirecting to documents URL: {transcribe_url}")
-        return redirect(transcribe_url)
+    if access_token:
+        # Redirect to the Translation-Service index
+        translation_service_url = os.environ.get("TRANSLATION_SERVICE_URL", "http://translation-service:5001")
+        target_url = f"{translation_service_url}/?token={access_token}"
+        logging.debug(f"Redirecting to Translation-Service: {target_url}")
+        return redirect(target_url)
     else:
+        logging.debug("Access token not found. Redirecting to login.")
         return render_template("login.html")
 
 
