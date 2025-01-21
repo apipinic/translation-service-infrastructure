@@ -18,42 +18,28 @@ spec:
     - host: translation-cloud.at
       http:
         paths:
-          - path: /             # Main path routes to login-service
+          - path: /             # Default route for Translation-Service
+            pathType: Prefix
+            backend:
+              service:
+                name: translation-service
+                port:
+                  number: 5001
+          - path: /login         # Route to Login-Service
             pathType: Prefix
             backend:
               service:
                 name: login-service
                 port:
                   number: 5000
-          - path: /login/health # Separate health check for login-service
-            pathType: Prefix
-            backend:
-              service:
-                name: login-service
-                port:
-                  number: 5000
-          - path: /transcribe   # Route to translation-service
+          - path: /transcribe    # Route to Translation-Service
             pathType: Prefix
             backend:
               service:
                 name: translation-service
                 port:
                   number: 5001
-          - path: /translate_live # Route to translation-service
-            pathType: Prefix
-            backend:
-              service:
-                name: translation-service
-                port:
-                  number: 5001
-          - path: c # Separate health check for translation-service
-            pathType: Prefix
-            backend:
-              service:
-                name: translation-service
-                port:
-                  number: 5001
-          - path: /translation/health # Separate health check for translation-service
+          - path: /health        # Health check for both services
             pathType: Prefix
             backend:
               service:

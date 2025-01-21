@@ -66,6 +66,14 @@ def index():
     """
     Render the main interface for transcription.
     """
+    token = request.args.get("token")
+    if token:
+        try:
+            user_info = decode_token(token)
+            logging.debug(f"User info from token: {user_info}")
+        except Exception as e:
+            logging.error(f"Invalid token: {e}")
+            return "Invalid token", 401
     return render_template("index.html")
 
 

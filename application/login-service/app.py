@@ -155,15 +155,14 @@ def index():
     logging.debug(f"Access token on homepage: {access_token}")
     
     if access_token:
-        # Redirect to the Translation-Service index
-        translation_service_url = os.environ.get("TRANSLATION_SERVICE_URL", "http://translation-service:5001")
+        # Redirect to the Translation-Service homepage
+        translation_service_url = os.environ.get("TRANSLATION_SERVICE_URL", "http://translation-cloud.at")
         target_url = f"{translation_service_url}/?token={access_token}"
         logging.debug(f"Redirecting to Translation-Service: {target_url}")
         return redirect(target_url)
     else:
         logging.debug("Access token not found. Redirecting to login.")
         return render_template("login.html")
-
 
 @app.route("/logout")
 @login_required
