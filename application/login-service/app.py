@@ -12,16 +12,14 @@ import logging
 # Enable OAuth for development over HTTP
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
-<<<<<<< HEAD
 # Configuration
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "default-client-id")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "default-client-secret")
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
 logging.debug("Google OAuth configuration loaded.")
-=======
+
 # Logging setup
 logging.basicConfig(level=logging.DEBUG)
->>>>>>> parent of 2fc699d (Update)
 
 # Initialize Flask app
 app = Flask(__name__)
