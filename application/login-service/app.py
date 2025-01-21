@@ -1,6 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, request, jsonify, make_response
 from flask_login import LoginManager, login_user, logout_user, current_user, UserMixin, login_required
-from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import JWTManager, create_access_token, decode_token
 from oauthlib.oauth2 import WebApplicationClient
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_cors import CORS
@@ -99,58 +99,62 @@ def login():
 
 @app.route("/login/callback")
 def callback():
-    code = request.args.get("code")
-    logging.debug(f"Authorization code received: {code}")
-    google_provider_cfg = get_google_provider_cfg()
-    token_endpoint = google_provider_cfg["token_endpoint"]
-    redirect_uri = url_for("callback", _external=True, _scheme="https")
-    token_url, headers, body = client.prepare_token_request(
-        token_endpoint,
-        authorization_response=request.url,
-        redirect_url=redirect_uri,
-        code=code
-    )
-    token_response = requests.post(
-        token_url,
-        headers=headers,
-        data=body,
-        auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
-    )
-    logging.debug(f"Token response received: {token_response.json()}")
-    client.parse_request_body_response(json.dumps(token_response.json()))
-    userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
-    uri, headers, body = client.add_token(userinfo_endpoint)
-    userinfo_response = requests.get(uri, headers=headers)
-    logging.debug(f"User info received: {userinfo_response.json()}")
-
-    if userinfo_response.json().get("email_verified"):
-        unique_id = userinfo_response.json()["sub"]
-        users_email = userinfo_response.json()["email"]
-        users_name = userinfo_response.json()["given_name"]
-
-        # Create user
-        user = User(unique_id, users_name, users_email)
-        users[unique_id] = user
-        login_user(user)
-
-        # JWT Token
-        access_token = create_access_token(identity={"id": unique_id, "email": users_email})
-        logging.debug(f"JWT token generated: {access_token}")
-
-        # Set token in cookie
-        response = redirect(url_for("index"))
-        response.set_cookie(
-            "token",
-            access_token,
-            secure=True,
-            httponly=True,
-            samesite="Lax",
-            domain="translation-cloud.at"
+    try:
+        code = request.args.get("code")
+        logging.debug(f"Authorization code received: {code}")
+        google_provider_cfg = get_google_provider_cfg()
+        token_endpoint = google_provider_cfg["token_endpoint"]
+        redirect_uri = url_for("callback", _external=True, _scheme="https")
+        token_url, headers, body = client.prepare_token_request(
+            token_endpoint,
+            authorization_response=request.url,
+            redirect_url=redirect_uri,
+            code=code
         )
-        return response
-    else:
-        logging.error("User email not verified.")
-        return "User email not verified by Google.", 400
+        token_response = requests.post(
+            token_url,
+            headers=headers,
+            data=body,
+            auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
+        )
+        logging.debug(f"Token response received: {token_response.json()}")
+        client.parse_request_body_response(json.dumps(token_response.json()))
+        userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
+        uri, headers, body = client.add_token(userinfo_endpoint)
+        userinfo_response = requests.get(uri, headers=headers)
+        logging.debug(f"User info received: {userinfo_response.json()}")
+
+        if userinfo_response.json().get("email_verified"):
+            unique_id = userinfo_response.json()["sub"]
+            users_email = userinfo_response.json()["email"]
+            users_name = userinfo_response.json()["given_name"]
+
+            # Create user
+            user = User(unique_id, users_name, users_email)
+            users[unique_id] = user
+            login_user(user)
+
+            # JWT Token
+            access_token = create_access_token(identity={"id": unique_id, "email": users_email})
+            logging.debug(f"JWT token generated: {access_token}")
+
+            # Set token in cookie
+            response = redirect(url_for("index"))
+            response.set_cookie(
+                "token",
+                access_token,
+                secure=True,
+                httponly=True,
+                samesite="Lax",
+                domain="translation-cloud.at"
+            )
+            return response
+        else:
+            logging.error("User email not verified.")
+            return render_template("error.html", error="Email konnte nicht verifiziert werden.")
+    except Exception as e:
+        logging.error(f"Error during login callback: {e}")
+        return render_template("error.html", error="Login fehlgeschlagen.")
 
 
 @app.route("/")
@@ -161,14 +165,14 @@ def index():
     if access_token:
         try:
             # Token-Validierung
-            decode_token(access_token)
-            # Weiterleitung zur Translation-Service-Route
-            translation_service_url = os.environ.get("TRANSLATION_SERVICE_URL", "http://translation-cloud.at")
-            return redirect(f"{translation_service_url}/transcribe")
+            decoded_token = decode_token(access_token)
+            logging.debug(f"Decoded token: {decoded_token}")
+            user_email = decoded_token["sub"]["email"]
+            return f"<h1>Willkommen, {user_email}!</h1>"
         except Exception as e:
             logging.error(f"Invalid token: {e}")
             # Ungültiges Token -> Zur Login-Seite zurück
-            return render_template("login.html")
+            return render_template("login.html", error="Ungültiges oder abgelaufenes Token.")
     else:
         # Kein Token vorhanden -> Login-Seite anzeigen
         return render_template("login.html")
@@ -178,8 +182,7 @@ def index():
 @login_required
 def logout():
     logout_user()
-    response = render_template("login.html")
-    response = make_response(response)
+    response = make_response(render_template("login.html"))
     response.delete_cookie("token")  # JWT token
     response.delete_cookie("session")  # Session cookie
     logging.debug("User logged out and cookies cleared.")
