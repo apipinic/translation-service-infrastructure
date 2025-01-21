@@ -134,8 +134,8 @@ def callback():
             users[unique_id] = user
             login_user(user)
 
-            # JWT Token (use unique_id as sub)
-            access_token = create_access_token(identity=unique_id)
+            # JWT Token (use unique_id as a string)
+            access_token = create_access_token(identity=str(unique_id))  # Ensures identity is a string
             logging.debug(f"JWT token generated: {access_token}")
 
             # Set token in cookie
