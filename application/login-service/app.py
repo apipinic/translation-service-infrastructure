@@ -158,18 +158,11 @@ def index():
     logging.debug(f"User authenticated: {current_user.is_authenticated}")
     
     if current_user.is_authenticated and access_token:
-        # Redirect to /transcribe
-        logging.debug(f"Redirecting to /transcribe")
-        return redirect(url_for("transcribe"))
+        transcribe_url =  f"{request.url_root}transcribe?token={access_token}"
+        logging.debug(f"Redirecting to documents URL: {transcribe_url}")
+        return redirect(transcribe_url)
     else:
         return render_template("login.html")
-
-
-@app.route("/transcribe", methods=["GET"])
-@login_required
-def transcribe():
-    # Render the transcribe page
-    return render_template("index.html", username=current_user.name)
 
 
 @app.route("/logout")
