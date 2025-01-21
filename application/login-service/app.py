@@ -12,16 +12,10 @@ import logging
 # Enable OAuth for development over HTTP
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
-# Configuration
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "default-client-id")
-GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "default-client-secret")
-GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
-logging.debug("Google OAuth configuration loaded.")
-
 # Logging setup
 logging.basicConfig(level=logging.DEBUG)
 
-# Initialize Flask app
+# Flask app setup
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 app.secret_key = os.environ.get("SECRET_KEY", "default-secret-key")
@@ -79,9 +73,17 @@ def log_headers():
     logging.debug(f"Headers: {dict(request.headers)}")
 
 
+def get_google_provider_cfg():
+    """
+    Retrieves Google's OAuth 2.0 configuration.
+    """
+    logging.debug("Fetching Google provider configuration.")
+    return requests.get(GOOGLE_DISCOVERY_URL).json()
+
+
 @app.route("/login")
 def login():
-    google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
+    google_provider_cfg = get_google_provider_cfg()
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
 
     redirect_uri = url_for("callback", _external=True, _scheme="https")
@@ -101,7 +103,7 @@ def callback():
     logging.debug(f"Authorization code received: {code}")
     google_provider_cfg = get_google_provider_cfg()
     token_endpoint = google_provider_cfg["token_endpoint"]
-    redirect_uri = url_for('callback', _external=True, _scheme='https' if request.is_secure else 'http')
+    redirect_uri = url_for("callback", _external=True, _scheme='https' if request.is_secure else 'http')
     token_url, headers, body = client.prepare_token_request(
         token_endpoint,
         authorization_response=request.url,
@@ -124,9 +126,8 @@ def callback():
     if userinfo_response.json().get("email_verified"):
         unique_id = userinfo_response.json()["sub"]
         users_email = userinfo_response.json()["email"]
-        picture = userinfo_response.json()["picture"]
         users_name = userinfo_response.json()["given_name"]
-        user = User(unique_id, users_name, users_email, picture)
+        user = User(unique_id, users_name, users_email)
         users[unique_id] = user  # Save the user
         login_user(user, remember=True)
         logging.debug(f"User logged in: {unique_id}")
@@ -136,14 +137,20 @@ def callback():
             "id": unique_id,
             "name": users_name,
             "email": users_email,
-            "profile_pic": picture
         }
         access_token = create_access_token(identity=user_info)
         logging.debug(f"JWT token issued for user {unique_id}.")
 
-        # Forward to Translation-Service (index.html)
-        translation_service_url = os.environ.get("TRANSLATION_SERVICE_URL", "http://translation-service:5001")
-        return redirect(f"{translation_service_url}/?token={access_token}")
+        # Set token in cookies
+        response = redirect(url_for("index"))
+        response.set_cookie(
+            "token",
+            access_token,
+            secure=True,  # Set to True in production
+            httponly=True,
+            samesite="Lax",
+        )
+        return response
     else:
         logging.error("User email not verified by Google.")
         return "User email not available or not verified by Google.", 400
@@ -163,6 +170,7 @@ def index():
     else:
         logging.debug("Access token not found. Redirecting to login.")
         return render_template("login.html")
+
 
 @app.route("/logout")
 @login_required

@@ -20,6 +20,3 @@ spec:
         - containerPort: 5001  # Correct port for the translation service
       imagePullSecrets:
       - name: ghcr-secret  # Reference the secret
-      env:
-      - name: TRANSLATION_SERVICE_URL
-        value: "http://translation-service:5001"
