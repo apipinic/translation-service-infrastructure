@@ -158,17 +158,22 @@ def callback():
 
 @app.route("/")
 def index():
-    access_token = request.cookies.get("token")  # Retrieve token from cookies
+    access_token = request.cookies.get("token")  # JWT-Token aus Cookies abrufen
     logging.debug(f"Access token on homepage: {access_token}")
-    
+
     if access_token:
-        # Redirect to the Translation-Service homepage
-        translation_service_url = os.environ.get("TRANSLATION_SERVICE_URL", "http://translation-cloud.at")
-        target_url = f"{translation_service_url}/?token={access_token}"
-        logging.debug(f"Redirecting to Translation-Service: {target_url}")
-        return redirect(target_url)
+        try:
+            # Token-Validierung
+            decode_token(access_token)
+            # Weiterleitung zur Translation-Service-Route
+            translation_service_url = os.environ.get("TRANSLATION_SERVICE_URL", "http://translation-cloud.at")
+            return redirect(f"{translation_service_url}/transcribe")
+        except Exception as e:
+            logging.error(f"Invalid token: {e}")
+            # Ungültiges Token -> Zur Login-Seite zurück
+            return render_template("login.html")
     else:
-        logging.debug("Access token not found. Redirecting to login.")
+        # Kein Token vorhanden -> Login-Seite anzeigen
         return render_template("login.html")
 
 
