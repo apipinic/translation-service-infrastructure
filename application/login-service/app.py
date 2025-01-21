@@ -134,7 +134,7 @@ def callback():
             users[unique_id] = user
             login_user(user)
 
-            # JWT Token (nutze eindeutige ID als `sub`)
+            # JWT Token (use unique_id as sub)
             access_token = create_access_token(identity=unique_id)
             logging.debug(f"JWT token generated: {access_token}")
 
@@ -151,36 +151,39 @@ def callback():
             return response
         else:
             logging.error("User email not verified.")
-            return render_template("error.html", error="Email konnte nicht verifiziert werden.")
+            return render_template("error.html", error="Email konnte nicht verifiziert werden."), 400
     except Exception as e:
         logging.error(f"Error during login callback: {e}")
-        return render_template("error.html", error="Login fehlgeschlagen.")
+        return render_template("error.html", error="Login fehlgeschlagen."), 400
+
 
 @app.route("/")
 def index():
-    access_token = request.cookies.get("token")  # JWT-Token aus Cookies abrufen
+    access_token = request.cookies.get("token")  # JWT token from cookies
     logging.debug(f"Access token on homepage: {access_token}")
 
     if access_token:
         try:
-            # Token-Validierung
+            # Validate token
             decoded_token = decode_token(access_token)
             logging.debug(f"Decoded token: {decoded_token}")
-            user_id = decoded_token["sub"]  # `sub` ist jetzt eine eindeutige ID (z. B. Google `sub`)
+            user_id = decoded_token["sub"]  # `sub` is now a unique ID (string)
             return f"<h1>Willkommen, Benutzer mit ID: {user_id}!</h1>"
         except Exception as e:
             logging.error(f"Invalid token: {e}")
-            # Ungültiges Token -> Zur Login-Seite zurück
+            # Invalid token -> redirect to login page
             return render_template("login.html", error="Ungültiges oder abgelaufenes Token.")
     else:
-        # Kein Token vorhanden -> Login-Seite anzeigen
+        # No token -> show login page
         return render_template("login.html")
+
 
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
-    response = make_response(render_template("login.html"))
+    response = render_template("login.html")
+    response = make_response(response)
     response.delete_cookie("token")  # JWT token
     response.delete_cookie("session")  # Session cookie
     logging.debug("User logged out and cookies cleared.")
