@@ -55,23 +55,19 @@ client = WebApplicationClient(GOOGLE_CLIENT_ID)
 # User storage
 users = {}
 
-
 class User(UserMixin):
     def __init__(self, id_, name, email):
         self.id = id_
         self.name = name
         self.email = email
 
-
 @login_manager.user_loader
 def load_user(user_id):
     return users.get(user_id)
 
-
 @app.before_request
 def log_headers():
     logging.debug(f"Headers: {dict(request.headers)}")
-
 
 def get_google_provider_cfg():
     """
@@ -79,7 +75,6 @@ def get_google_provider_cfg():
     """
     logging.debug("Fetching Google provider configuration.")
     return requests.get(GOOGLE_DISCOVERY_URL).json()
-
 
 @app.route("/login")
 def login():
@@ -95,7 +90,6 @@ def login():
         scope=["openid", "email", "profile"],
     )
     return redirect(request_uri)
-
 
 @app.route("/login/callback")
 def callback():
@@ -145,8 +139,7 @@ def callback():
                 access_token,
                 secure=True,
                 httponly=True,
-                samesite="Lax",
-                domain="translation-cloud.at"
+                samesite="Lax"
             )
             return response
         else:
@@ -155,7 +148,6 @@ def callback():
     except Exception as e:
         logging.error(f"Error during login callback: {e}")
         return render_template("error.html", error="Login fehlgeschlagen."), 400
-
 
 @app.route("/")
 def index():
@@ -167,7 +159,9 @@ def index():
             # Validate token
             decoded_token = decode_token(access_token)
             logging.debug(f"Decoded token: {decoded_token}")
-            user_id = decoded_token["sub"]  # `sub` is now the unique ID (string)
+            user_id = str(decoded_token.get("sub", ""))  # Ensure `sub` is a string
+            if not user_id:
+                raise ValueError("The 'sub' field in the token is missing or invalid.")
             return f"<h1>Willkommen, Benutzer mit ID: {user_id}!</h1>"
         except Exception as e:
             logging.error(f"Invalid token: {e}")
@@ -176,7 +170,6 @@ def index():
     else:
         # No token -> show login page
         return render_template("login.html")
-
 
 @app.route("/logout")
 @login_required
@@ -189,11 +182,9 @@ def logout():
     logging.debug("User logged out and cookies cleared.")
     return response
 
-
 @app.route("/health")
 def health():
     return "OK Login Service", 200
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
