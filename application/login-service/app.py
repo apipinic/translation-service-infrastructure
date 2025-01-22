@@ -132,22 +132,17 @@ def callback():
             access_token = create_access_token(identity=str(unique_id))  # Ensures identity is a string
             logging.debug(f"JWT token generated: {access_token}")
 
-            # Set token in cookie
-            response = redirect(url_for("index"))
-            response.set_cookie(
-                "token",
-                access_token,
-                secure=True,
-                httponly=True,
-                samesite="Lax"
-            )
-            return response
+            # Redirect to translation service with token
+            translation_service_url = f"http://aa4dfde6978ea4d6990db5fcfe5d10a3-242365651.eu-central-1.elb.amazonaws.com:5001/transcribe?token={access_token}"
+            return redirect(translation_service_url)
+
         else:
             logging.error("User email not verified.")
             return render_template("error.html", error="Email konnte nicht verifiziert werden."), 400
     except Exception as e:
         logging.error(f"Error during login callback: {e}")
         return render_template("error.html", error="Login fehlgeschlagen."), 400
+
 
 @app.route("/")
 def index():

@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: translation-alb-ingress
+  name: translation-service-alb-ingress
   namespace: kundea
   annotations:
     nginx.ingress.kubernetes.io/affinity: cookie
@@ -30,22 +30,6 @@ spec:
                   number: 5000
           # Route to Translation-Service
           - path: /transcribe
-            pathType: Prefix
-            backend:
-              service:
-                name: translation-service
-                port:
-                  number: 5001
-          # Health check for Login-Service
-          - path: /health-login
-            pathType: Prefix
-            backend:
-              service:
-                name: login-service
-                port:
-                  number: 5000
-          # Health check for Translation-Service
-          - path: /health-translation
             pathType: Prefix
             backend:
               service:

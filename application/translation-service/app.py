@@ -79,9 +79,6 @@ def index():
 
 @app.route('/transcribe', methods=['POST'])
 def transcribe():
-    """
-    Handle file upload for transcription and translation.
-    """
     try:
         # Validate token
         token = request.args.get('token')
@@ -133,7 +130,6 @@ def transcribe():
     except Exception as e:
         logging.error(f"Error during transcription: {e}")
         return jsonify({"error": str(e)}), 500
-
 
 @app.route("/health")
 def health():
