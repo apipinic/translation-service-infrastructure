@@ -162,7 +162,10 @@ def index():
             user_id = str(decoded_token.get("sub", ""))  # Ensure `sub` is a string
             if not user_id:
                 raise ValueError("The 'sub' field in the token is missing or invalid.")
-            return f"<h1>Willkommen, Benutzer mit ID: {user_id}!</h1>"
+            user = users.get(user_id)
+            if not user:
+                raise ValueError("User not found.")
+            return f"<h1>Willkommen, {user.name}!</h1>"
         except Exception as e:
             logging.error(f"Invalid token: {e}")
             # Invalid token -> redirect to login page
