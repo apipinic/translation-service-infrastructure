@@ -88,6 +88,41 @@ def transcribe():
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         return jsonify({"msg": "An error occurred while processing the request"}), 500
+    
+@app.route('/translate_live', methods=['POST'])
+def translate_live():
+    token = request.args.get('token')
+    if not token:
+        return jsonify({"msg": "Token not found! Please login again."}), 401
+
+    try:
+        # Validate the token
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get("sub")
+
+        # Check for token expiration
+        if decoded_token["exp"] < int(time.time()):
+            return jsonify({"msg": "Token has expired. Please login again."}), 401
+
+        # Process live transcription data
+        request_data = request.get_json()
+        text = request_data.get("text", "")
+        if not text:
+            return jsonify({"msg": "No text provided for translation"}), 400
+
+        # Translate the text
+        translation = GoogleTranslator(source='en', target='de').translate(text)
+        logging.info(f"Live Translation: {translation}")
+
+        return jsonify({
+            "user_id": user_id,
+            "translation": translation
+        }), 200
+
+    except Exception as e:
+        logging.error(f"An error occurred during live translation: {e}")
+        return jsonify({"msg": "An error occurred while processing the request"}), 500
+
 
 
 @app.route("/health", methods=["GET"])
