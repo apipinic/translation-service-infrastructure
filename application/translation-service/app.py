@@ -6,6 +6,7 @@ from flask_jwt_extended import JWTManager, decode_token
 from flask_cors import CORS
 import subprocess
 import logging
+import time
 
 # Logging setup
 logging.basicConfig(level=logging.DEBUG)
@@ -39,6 +40,10 @@ def transcribe():
         # Validate the token
         decoded_token = decode_token(token)
         user_id = decoded_token.get("sub")
+
+        # Check for token expiration
+        if decoded_token["exp"] < int(time.time()):
+            return jsonify({"msg": "Token has expired. Please login again."}), 401
 
         if request.method == 'GET':
             return render_template("index.html", username=user_id, token=token)
@@ -83,7 +88,6 @@ def transcribe():
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         return jsonify({"msg": "An error occurred while processing the request"}), 500
-
 
 
 @app.route("/health", methods=["GET"])
