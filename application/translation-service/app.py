@@ -41,7 +41,7 @@ def transcribe():
         user_id = decoded_token.get("sub")
 
         if request.method == 'GET':
-            return render_template("transcribe.html", username=user_id, token=token)
+            return render_template("index.html", username=user_id, token=token)
 
         elif request.method == 'POST':
             # Handle file uploads and transcription
