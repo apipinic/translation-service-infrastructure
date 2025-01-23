@@ -33,15 +33,18 @@ model = whisper.load_model("base")
 def transcribe():
     token = request.args.get('token')
     if not token:
-        return jsonify({"msg": "Missing JWT in headers or query string"}), 401
+        return jsonify({"msg": "Token not found! Please login again."}), 401
 
     try:
-        # Decode token and extract user info
+        # Validate the token
         decoded_token = decode_token(token)
         user_id = decoded_token.get("sub")
 
-        if request.method == 'POST':
-            # Process POST request for transcription
+        if request.method == 'GET':
+            return render_template("transcribe.html", username=user_id, token=token)
+
+        elif request.method == 'POST':
+            # Handle file uploads and transcription
             if 'file' not in request.files:
                 return jsonify({"msg": "No file uploaded"}), 400
 
@@ -52,7 +55,7 @@ def transcribe():
             file.save(file_path)
             logging.debug(f"File saved to {file_path}")
 
-            # Convert file to WAV if necessary
+            # Convert to WAV format if necessary
             if file.filename.lower().endswith(('.mp3', '.mp4')):
                 converted_path = file_path.rsplit('.', 1)[0] + ".wav"
                 subprocess.run(["ffmpeg", "-i", file_path, converted_path], check=True)
@@ -77,12 +80,10 @@ def transcribe():
                 "translation": translation
             }), 201
 
-        # Handle GET request (e.g., provide an example or documentation)
-        return render_template("index.html", user_id=user_id, token=token), 200
-
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         return jsonify({"msg": "An error occurred while processing the request"}), 500
+
 
 
 @app.route("/health", methods=["GET"])
