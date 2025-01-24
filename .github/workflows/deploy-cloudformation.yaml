@@ -27,7 +27,7 @@ jobs:
     # 3. Install AWS SAM CLI
     - name: Install AWS SAM CLI
       run: |
-        sudo pip install aws-sam-cli
+        sudo pip install --ignore-installed aws-sam-cli
 
     # 4. Package SAM Application
     - name: Package SAM Application
