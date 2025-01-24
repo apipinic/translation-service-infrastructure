@@ -5,7 +5,7 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: 310781019@hochschule-burgenland.at
+    email: 2310781019@hochschule-burgenland.at
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:

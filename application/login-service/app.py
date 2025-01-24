@@ -132,8 +132,7 @@ def callback():
             access_token = create_access_token(identity=str(unique_id))  # Ensures identity is a string
             logging.debug(f"JWT token generated: {access_token}")
 
-            # Redirect to translation service with token
-            translation_service_url = f"http://aa4dfde6978ea4d6990db5fcfe5d10a3-242365651.eu-central-1.elb.amazonaws.com:5001/transcribe?token={access_token}"
+            translation_service_url = f"https://translation-cloud.at/transcribe?token={access_token}"
             return redirect(translation_service_url)
 
         else:
