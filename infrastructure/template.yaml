@@ -1,9 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  sam-documentcloud
+  sam-translation-cloud
 
-  Sample SAM Template for sam-documentcloud
+  Sample SAM Template for sam-translation-cloud
 
 Parameters:
   EKSClusterName:
