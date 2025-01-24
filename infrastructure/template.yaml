@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   sam-translation-cloud
 
-  Sample SAM Template for sam-translation-cloud
+  Sample SAM Template for sam-translation-cloud 1.0
 
 Parameters:
   EKSClusterName:
