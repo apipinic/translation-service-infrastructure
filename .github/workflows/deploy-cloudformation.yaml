@@ -33,7 +33,7 @@ jobs:
     - name: Package SAM Application
       run: |
         sam package \
-          --template-file template.yaml \
+          --template-file infrastructure/template.yaml \
           --output-template-file packaged.yaml \
           --s3-bucket ${{ secrets.S3_BUCKET }}
 
