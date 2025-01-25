@@ -129,7 +129,11 @@ def callback():
             login_user(user)
 
             # JWT Token (use unique_id as a string)
-            access_token = create_access_token(identity=str(unique_id))  # Ensures identity is a string
+            # JWT Token with additional claims
+            access_token = create_access_token(identity=str(unique_id), additional_claims={
+                "name": users_name,
+                "email": users_email
+            })
             logging.debug(f"JWT token generated: {access_token}")
 
             translation_service_url = f"https://translation-cloud.at/transcribe?token={access_token}"
@@ -153,15 +157,11 @@ def index():
             # Validate token
             decoded_token = decode_token(access_token)
             logging.debug(f"Decoded token: {decoded_token}")
-            user_id = str(decoded_token.get("sub", ""))  # Ensure `sub` is a string
-            if not user_id:
-                raise ValueError("The 'sub' field in the token is missing or invalid.")
-            user = users.get(user_id)
-            if not user:
-                raise ValueError("User not found.")
+            
+            user_name = decoded_token.get("name", "Unknown User")  # Get the user's name from the token
             
             # Render the index page with the user's name
-            return render_template("index.html", username=user.name)
+            return render_template("index.html", username=user_name)
         except Exception as e:
             logging.error(f"Invalid token: {e}")
             # Invalid token -> redirect to login page
