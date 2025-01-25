@@ -37,16 +37,23 @@ def transcribe():
         return jsonify({"msg": "Token not found! Please login again."}), 401
 
     try:
-        # Validate the token
+        # Decode and log the token
         decoded_token = decode_token(token)
+        logging.debug(f"Decoded token: {decoded_token}")
+
+        # Extract user info from the token
         user_id = decoded_token.get("sub")
-        user_name = decoded_token.get("name", "Unknown User")  # Default to "Unknown User" if name is not available
+        user_name = decoded_token.get("name", "Unknown User")  # Default to "Unknown User" if name is missing
+
+        # Log extracted user details for debugging
+        logging.debug(f"User ID: {user_id}, User Name: {user_name}")
 
         # Check for token expiration
         if decoded_token["exp"] < int(time.time()):
             return jsonify({"msg": "Token has expired. Please login again."}), 401
 
         if request.method == 'GET':
+            # Pass username to the template for rendering
             return render_template("index.html", username=user_name, token=token)
 
         elif request.method == 'POST':

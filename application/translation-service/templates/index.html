@@ -163,6 +163,57 @@
             a.click();
         });
 
+        // Live Translation
+        let recognition;
+        let isListening = false;
+        let fullTranscription = "";
+        let fullTranslation = "";
+        document.getElementById("start").addEventListener("click", () => {
+            if (isListening) return;
+            isListening = true;
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = "en-US";
+            recognition.interimResults = true;
+            recognition.continuous = true;
+
+            recognition.onresult = async (e) => {
+                let transcript = "";
+                for (let i = e.resultIndex; i < e.results.length; i++) {
+                    transcript += e.results[i][0].transcript;
+                }
+                document.getElementById("live-transcription").innerText = transcript;
+                if (e.results[e.results.length - 1].isFinal) {
+                    fullTranscription += transcript + "\n";
+                    try {
+                        const response = await fetch(TRANSLATE_LIVE_URL, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ text: transcript }),
+                        });
+                        if (response.ok) {
+                            const data = await response.json();
+                            fullTranslation += data.translation + "\n";
+                            document.getElementById("live-translation").innerText = fullTranslation;
+                        } else {
+                            console.error("Translation API Error:", response.statusText);
+                        }
+                    } catch (error) {
+                        console.error("Translation API Request Error:", error);
+                    }
+                }
+            };
+
+            recognition.onend = () => {
+                if (isListening) recognition.start();
+            };
+            recognition.start();
+        });
+
+        document.getElementById("stop").addEventListener("click", () => {
+            isListening = false;
+            if (recognition) recognition.stop();
+        });
+
         // Download Meeting Transcript with Popup
         document.getElementById("downloadMeeting").addEventListener("click", () => {
             const modal = new bootstrap.Modal(document.getElementById("metadataModal"));
