@@ -10,10 +10,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Set build arguments
 ARG JWT_SECRET_KEY
 ARG SECRET_KEY
+ARG S3_BUCKET_NAME
+ARG DYNAMODB_TABLE
 
 # Set environment variables
 ENV JWT_SECRET_KEY=${JWT_SECRET_KEY}
 ENV SECRET_KEY=${SECRET_KEY}
+ENV S3_BUCKET_NAME=${S3_BUCKET_NAME}
+ENV DYNAMODB_TABLE=${DYNAMODB_TABLE}
 
 # Set working directory
 WORKDIR /app

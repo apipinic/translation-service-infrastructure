@@ -31,8 +31,8 @@ jwt = JWTManager(app)
 # Load Whisper model
 model = whisper.load_model("base")
 
-s3_bucket_name = os.environ.get("translation-cloud-bucket-project")
-dynamodb_table_name = os.environ.get("translation-cloud-bucket-project")
+s3_bucket_name = os.environ.get("S3_BUCKET_NAME")
+dynamodb_table_name = os.environ.get("DYNAMODB_TABLE")  
 
 s3_client = boto3.client("s3")
 dynamodb = boto3.resource("dynamodb")
@@ -212,10 +212,6 @@ def download_meeting():
         file_name = request.args.get('file_name')
         if not file_name:
             return jsonify({"msg": "file_name is required"}), 400
-
-        # Optional: Prüfen, ob die Datei zur user_id passt
-        # -> Hier könnte man decode_token(token) nutzen und schauen, ob user_id zusammenpasst.
-        # -> Für das Beispiel lassen wir die Prüfung weg, oder du erweiterst das nach Bedarf.
 
         presigned_url = s3_client.generate_presigned_url(
             'get_object',
