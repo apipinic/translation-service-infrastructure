@@ -48,5 +48,7 @@ jobs:
           docker build \
             --build-arg SECRET_KEY=${{ secrets.SECRET_KEY }} \
             --build-arg JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
+            --build-arg S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} \
+            --build-arg DYNAMODB_TABLE=${{ secrets.DYNAMODB_TABLE }} \
             -t ghcr.io/${{ github.repository_owner }}/translation-service:latest .
           docker push ghcr.io/${{ github.repository_owner }}/translation-service:latest
