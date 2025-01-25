@@ -159,7 +159,9 @@ def index():
             user = users.get(user_id)
             if not user:
                 raise ValueError("User not found.")
-            return f"<h1>Willkommen, {user.name}!</h1>"
+            
+            # Render the index page with the user's name
+            return render_template("index.html", username=user.name)
         except Exception as e:
             logging.error(f"Invalid token: {e}")
             # Invalid token -> redirect to login page
