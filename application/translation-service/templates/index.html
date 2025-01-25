@@ -63,6 +63,7 @@
                     <pre id="file-transcription" class="p-3 bg-light rounded"></pre>
                     <h5>Translation:</h5>
                     <pre id="file-translation" class="p-3 bg-light rounded"></pre>
+                    <button id="downloadButton" class="btn btn-success btn-sm mt-3 w-100">Download Transcript</button>
                 </div>
             </div>
 
@@ -80,6 +81,31 @@
                         <h5>Live Translation:</h5>
                         <pre id="live-translation" class="p-3 bg-light rounded"></pre>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popup Modal -->
+    <div class="modal" tabindex="-1" id="metadataModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Save Transcript</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="metadataForm">
+                        <div class="mb-3">
+                            <label for="meetingName" class="form-label">Meeting Name</label>
+                            <input type="text" id="meetingName" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="meetingDate" class="form-label">Meeting Date</label>
+                            <input type="date" id="meetingDate" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -124,11 +150,46 @@
             }
         });
 
+        // Handle Download Transcript
+        document.getElementById("downloadButton").addEventListener("click", () => {
+            // Open Modal
+            const modal = new bootstrap.Modal(document.getElementById("metadataModal"));
+            modal.show();
+
+            // Handle Form Submission
+            document.getElementById("metadataForm").addEventListener("submit", (e) => {
+                e.preventDefault();
+
+                const meetingName = document.getElementById("meetingName").value;
+                const meetingDate = document.getElementById("meetingDate").value;
+
+                if (!meetingName || !meetingDate) {
+                    alert("Please provide both meeting name and date.");
+                    return;
+                }
+
+                // Gather Transcription and Translation
+                const transcription = document.getElementById("file-transcription").innerText;
+                const translation = document.getElementById("file-translation").innerText;
+
+                // Create File Content
+                const fileContent = `Meeting Name: ${meetingName}\nMeeting Date: ${meetingDate}\n\nTranscription:\n${transcription}\n\nTranslation:\n${translation}`;
+
+                // Create Blob and Download
+                const blob = new Blob([fileContent], { type: "text/plain" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = `${meetingName.replace(/ /g, "_")}_${meetingDate}.txt`;
+                a.click();
+
+                // Close Modal
+                modal.hide();
+            });
+        });
+
         // Live Translation
         let recognition;
         let isListening = false;
-        let fullTranscription = "";
-        let fullTranslation = "";
         document.getElementById("start").addEventListener("click", () => {
             if (isListening) return;
             isListening = true;
@@ -144,7 +205,6 @@
                 }
                 document.getElementById("live-transcription").innerText = transcript;
                 if (e.results[e.results.length - 1].isFinal) {
-                    fullTranscription += transcript + "\n";
                     try {
                         const response = await fetch(TRANSLATE_LIVE_URL, {
                             method: "POST",
@@ -152,8 +212,7 @@
                             body: JSON.stringify({ text: transcript }),
                         });
                         const data = await response.json();
-                        fullTranslation += data.translation + "\n";
-                        document.getElementById("live-translation").innerText = fullTranslation;
+                        document.getElementById("live-translation").innerText += data.translation + "\n";
                     } catch (error) {
                         console.error("Translation API Error:", error);
                     }

@@ -31,8 +31,16 @@ spec:
                 name: login-service
                 port:
                   number: 5000
-          # Route to Translation-Service
+          # Route to Transcription Service
           - path: /transcribe
+            pathType: Prefix
+            backend:
+              service:
+                name: translation-service
+                port:
+                  number: 5001
+          # Route to Live Translation Service
+          - path: /translate_live
             pathType: Prefix
             backend:
               service:
