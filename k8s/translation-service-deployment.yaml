@@ -13,6 +13,7 @@ spec:
       labels:
         app: translation-service
     spec:
+      serviceAccountName: translation-service-sa
       containers:
       - name: translation-service
         image: ghcr.io/apipinic/translation-service:latest

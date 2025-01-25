@@ -7,6 +7,8 @@ from flask_cors import CORS
 import subprocess
 import logging
 import time
+import boto3
+from botocore.exceptions import BotoCoreError, ClientError
 
 # Logging setup
 logging.basicConfig(level=logging.DEBUG)
@@ -29,6 +31,12 @@ jwt = JWTManager(app)
 # Load Whisper model
 model = whisper.load_model("base")
 
+s3_bucket_name = os.environ.get("translation-cloud-bucket-project")
+dynamodb_table_name = os.environ.get("translation-cloud-bucket-project")
+
+s3_client = boto3.client("s3")
+dynamodb = boto3.resource("dynamodb")
+dynamodb_table = dynamodb.Table(dynamodb_table_name)
 
 @app.route('/transcribe', methods=['GET', 'POST'])
 def transcribe():
@@ -132,6 +140,93 @@ def translate_live():
         return jsonify({"msg": "An error occurred while processing the request"}), 500
 
 
+@app.route('/save_meeting', methods=['POST'])
+def save_meeting():
+    try:
+        # Daten vom Frontend empfangen
+        data = request.get_json()
+        meeting_name = data.get("meeting_name")
+        meeting_date = data.get("meeting_date")
+        transcription = data.get("transcription")
+        translation = data.get("translation")
+        user_id = data.get("user_id")
+
+        if not all([meeting_name, meeting_date, transcription, translation, user_id]):
+            return jsonify({"msg": "Missing required fields"}), 400
+
+        # Dateiinhalt erstellen
+        file_content = f"Meeting Name: {meeting_name}\nMeeting Date: {meeting_date}\n\nTranscription:\n{transcription}\n\nTranslation:\n{translation}"
+        file_name = f"{meeting_name.replace(' ', '_')}_{meeting_date}.txt"
+
+        # In S3 speichern
+        s3_client.put_object(
+            Bucket=s3_bucket_name,
+            Key=file_name,
+            Body=file_content.encode("utf-8")
+        )
+
+        # In DynamoDB speichern
+        dynamodb_table.put_item(
+            Item={
+                "user_id": user_id,
+                "file_name": file_name,
+                "meeting_name": meeting_name,
+                "meeting_date": meeting_date,
+                "s3_key": file_name
+            }
+        )
+
+        return jsonify({"msg": "Meeting saved successfully", "file_name": file_name}), 200
+
+    except (BotoCoreError, ClientError) as e:
+        logging.error(f"Error saving meeting: {e}")
+        return jsonify({"msg": "Error saving meeting"}), 500
+    
+
+@app.route('/get_last_meetings', methods=['GET'])
+def get_last_meetings():
+    try:
+        user_id = request.args.get("user_id")
+        if not user_id:
+            return jsonify({"msg": "User ID is required"}), 400
+
+        # Meetings für den Benutzer aus DynamoDB abrufen
+        response = dynamodb_table.scan(
+            FilterExpression="user_id = :user_id",
+            ExpressionAttributeValues={":user_id": user_id}
+        )
+        items = response.get("Items", [])
+        return jsonify(items), 200
+
+    except Exception as e:
+        logging.error(f"Error fetching meetings: {e}")
+        return jsonify({"msg": "Error fetching meetings"}), 500
+    
+@app.route('/download_meeting', methods=['GET'])
+def download_meeting():
+    """
+    Erstellt eine Presigned URL für den angegebenen S3-Key.
+    """
+    try:
+        token = request.args.get('token')  # optional: Validierung
+        file_name = request.args.get('file_name')
+        if not file_name:
+            return jsonify({"msg": "file_name is required"}), 400
+
+        # Optional: Prüfen, ob die Datei zur user_id passt
+        # -> Hier könnte man decode_token(token) nutzen und schauen, ob user_id zusammenpasst.
+        # -> Für das Beispiel lassen wir die Prüfung weg, oder du erweiterst das nach Bedarf.
+
+        presigned_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': s3_bucket_name, 'Key': file_name},
+            ExpiresIn=3600  # 1 Stunde gültig
+        )
+        return jsonify({"url": presigned_url}), 200
+
+    except Exception as e:
+        logging.error(f"Error generating presigned URL: {e}")
+        return jsonify({"msg": "Error generating presigned URL"}), 500
 
 @app.route("/health", methods=["GET"])
 def health():
