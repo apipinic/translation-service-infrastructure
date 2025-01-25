@@ -294,42 +294,79 @@
       if (recognition) recognition.stop();
     });
 
-    // 4) Download Meeting Transcript (LIVE) + Popup
+    // 4) Modal öffnen beim Klick auf "Download Meeting Transcript"
     document.getElementById("downloadMeeting").addEventListener("click", () => {
       const modal = new bootstrap.Modal(document.getElementById("metadataModal"));
       modal.show();
+    });
 
-      // Beim Abschicken des Modal-Forms: Datei runterladen (lokal)
-      // (Hier noch KEIN Save an S3/Dynamo - nur lokales Speichern)
-      document.getElementById("metadataForm").addEventListener("submit", (e) => {
-        e.preventDefault();
-        const meetingName = document.getElementById("meetingName").value;
-        const meetingDate = document.getElementById("meetingDate").value;
+    // 4a) "metadataForm" -> Lokaler Download + S3/DynamoDB-Speichern
+    document.getElementById("metadataForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const meetingName = document.getElementById("meetingName").value;
+      const meetingDate = document.getElementById("meetingDate").value;
 
-        if (!meetingName || !meetingDate) {
-          alert("Please provide both meeting name and date.");
+      if (!meetingName || !meetingDate) {
+        alert("Please provide both meeting name and date.");
+        return;
+      }
+      if (!globalUserId) {
+        alert("No user ID found. Please transcribe or speak first.");
+        return;
+      }
+
+      // Hole Transkription & Übersetzung aus dem Live-Tab
+      const transcription = document.getElementById("live-transcription").innerText;
+      const translation = document.getElementById("live-translation").innerText;
+
+      // 1) Lokaler Download
+      const fileContent = `Meeting Name: ${meetingName}\nMeeting Date: ${meetingDate}\n\nTranscription:\n${transcription}\n\nTranslation:\n${translation}`;
+      const blob = new Blob([fileContent], { type: "text/plain" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${meetingName.replace(/ /g, "_")}_${meetingDate}.txt`;
+      a.click();
+
+      // 2) Zusätzlich Meeting in S3/DynamoDB speichern
+      try {
+        const body = {
+          meeting_name: meetingName,
+          meeting_date: meetingDate,
+          transcription: transcription,
+          translation: translation,
+          user_id: globalUserId
+        };
+
+        const response = await fetch("/save_meeting", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          alert("Error saving meeting: " + (error.msg || response.status));
           return;
         }
+        const resData = await response.json();
+        alert("Meeting saved to S3 & DynamoDB: " + resData.file_name);
 
-        const transcription =
-          document.getElementById("live-transcription").innerText;
-        const translation = document.getElementById("live-translation").innerText;
-        const fileContent = `Meeting Name: ${meetingName}\nMeeting Date: ${meetingDate}\n\nTranscription:\n${transcription}\n\nTranslation:\n${translation}`;
+        // Optional: Lade Meeting-Liste neu
+        fetchLastMeetings();
 
-        const blob = new Blob([fileContent], { type: "text/plain" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `${meetingName.replace(/ /g, "_")}_${meetingDate}.txt`;
-        a.click();
+      } catch (err) {
+        console.error("Save meeting error:", err);
+        alert("An error occurred while saving the meeting.");
+      }
 
-        // Clear live transcription
-        document.getElementById("live-transcription").innerText = "";
-        document.getElementById("live-translation").innerText = "";
+      // 3) Aufräumen & Modal schließen
+      document.getElementById("live-transcription").innerText = "";
+      document.getElementById("live-translation").innerText = "";
+      document.getElementById("metadataForm").reset();
 
-        // Reset the form
-        document.getElementById("metadataForm").reset();
-        modal.hide();
-      });
+      const modalElement = document.getElementById("metadataModal");
+      const modal = bootstrap.Modal.getInstance(modalElement);
+      modal.hide();
     });
 
     // 5) Letzte Meetings laden
@@ -397,7 +434,7 @@
         }
         const data = await resp.json();
         const presignedUrl = data.url;
-        // Öffne in neuem Tab, lade direkt herunter oder nutze `window.location = presignedUrl;`
+        // Öffne in neuem Tab, lade direkt herunter, o. Ä.
         window.open(presignedUrl, "_blank");
       } catch (error) {
         console.error("downloadMeetingFile Error:", error);
