@@ -177,6 +177,7 @@
     const token = "{{ token }}"; // Wird vom Backend mitgegeben
     const TRANSCRIBE_URL = `/transcribe?token=${token}`;
     const TRANSLATE_LIVE_URL = `/translate_live?token=${token}`;
+    const SAVEMEETING_URL = `/save_meeting?token=${token}`;
 
     // 1) FILE-Upload & Transcription
     document
@@ -337,7 +338,7 @@
           user_id: globalUserId
         };
 
-        const response = await fetch("/save_meeting", {
+        const response = await fetch(SAVEMEETING_URL , {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body)
