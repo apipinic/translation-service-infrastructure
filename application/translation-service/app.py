@@ -142,15 +142,27 @@ def translate_live():
 
 @app.route('/save_meeting', methods=['POST'])
 def save_meeting():
+    token = request.args.get('token')  # Hole den Token aus der Anfrage
+    if not token:
+        return jsonify({"msg": "Token not found! Please login again."}), 401
+
     try:
+        # Token validieren und Benutzerinformationen extrahieren
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get("sub")
+
+        # Überprüfen, ob der Token abgelaufen ist
+        if decoded_token["exp"] < int(time.time()):
+            return jsonify({"msg": "Token has expired. Please login again."}), 401
+
         # Daten vom Frontend empfangen
         data = request.get_json()
         meeting_name = data.get("meeting_name")
         meeting_date = data.get("meeting_date")
         transcription = data.get("transcription")
         translation = data.get("translation")
-        user_id = data.get("user_id")
 
+        # Sicherstellen, dass alle erforderlichen Felder vorhanden sind
         if not all([meeting_name, meeting_date, transcription, translation, user_id]):
             return jsonify({"msg": "Missing required fields"}), 400
 
@@ -158,14 +170,14 @@ def save_meeting():
         file_content = f"Meeting Name: {meeting_name}\nMeeting Date: {meeting_date}\n\nTranscription:\n{transcription}\n\nTranslation:\n{translation}"
         file_name = f"{meeting_name.replace(' ', '_')}_{meeting_date}.txt"
 
-        # In S3 speichern
+        # Datei in S3 speichern
         s3_client.put_object(
             Bucket=s3_bucket_name,
             Key=file_name,
             Body=file_content.encode("utf-8")
         )
 
-        # In DynamoDB speichern
+        # Daten in DynamoDB speichern
         dynamodb_table.put_item(
             Item={
                 "user_id": user_id,
@@ -181,6 +193,11 @@ def save_meeting():
     except (BotoCoreError, ClientError) as e:
         logging.error(f"Error saving meeting: {e}")
         return jsonify({"msg": "Error saving meeting"}), 500
+
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+        return jsonify({"msg": "An unexpected error occurred"}), 500
+
     
 
 @app.route('/get_last_meetings', methods=['GET'])
