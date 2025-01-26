@@ -47,3 +47,28 @@ spec:
                 name: translation-service
                 port:
                   number: 5001
+          # Route /save_meeting => translation-service
+          - path: /save_meeting
+            pathType: Prefix
+            backend:
+              service:
+                name: translation-service
+                port:
+                  number: 5001
+          # Route /get_last_meetings => translation-service
+          - path: /get_last_meetings
+            pathType: Prefix
+            backend:
+              service:
+                name: translation-service
+                port:
+                  number: 5001
+
+          # Route /download_meeting => translation-service
+          - path: /download_meeting
+            pathType: Prefix
+            backend:
+              service:
+                name: translation-service
+                port:
+                  number: 5001
