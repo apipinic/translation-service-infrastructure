@@ -252,24 +252,35 @@ def get_last_meetings():
 @app.route('/download_meeting', methods=['GET'])
 def download_meeting():
     """
-    Erstellt eine Presigned URL für den angegebenen S3-Key.
+    Generates a presigned URL for the specified S3 key.
     """
     try:
-        token = request.args.get('token')  # optional: Validierung
+        token = request.args.get('token')  # Token validation (optional)
         file_name = request.args.get('file_name')
+        user_id = decode_token(token).get("sub")  # Extract user ID from the token
+
         if not file_name:
             return jsonify({"msg": "file_name is required"}), 400
 
+        if not user_id:
+            return jsonify({"msg": "Invalid user ID"}), 401
+
+        # Add user-specific prefix to the file key
+        s3_key = f"{user_id}/{file_name}"
+
+        # Generate the presigned URL
         presigned_url = s3_client.generate_presigned_url(
             'get_object',
-            Params={'Bucket': s3_bucket_name, 'Key': file_name},
-            ExpiresIn=3600  # 1 Stunde gültig
+            Params={'Bucket': s3_bucket_name, 'Key': s3_key},
+            ExpiresIn=3600  # 1 hour
         )
+
         return jsonify({"url": presigned_url}), 200
 
     except Exception as e:
         logging.error(f"Error generating presigned URL: {e}")
         return jsonify({"msg": "Error generating presigned URL"}), 500
+
     
 @app.route('/get_user_info', methods=['GET'])
 def get_user_info():

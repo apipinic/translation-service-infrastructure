@@ -514,19 +514,32 @@
         dateCell.textContent = m.meeting_date || "-";
         row.appendChild(dateCell);
 
-        const downloadCell = document.createElement("td");
+        const actionCell = document.createElement("td");
+
+        // Download Button
         const downloadBtn = document.createElement("button");
-        downloadBtn.classList.add("btn", "btn-sm", "btn-success");
+        downloadBtn.classList.add("btn", "btn-sm", "btn-success", "me-2");
         downloadBtn.textContent = "Download";
         downloadBtn.addEventListener("click", () => {
           downloadMeetingFile(m.file_name);
         });
-        downloadCell.appendChild(downloadBtn);
-        row.appendChild(downloadCell);
+        actionCell.appendChild(downloadBtn);
+
+        // Delete Button
+        const deleteBtn = document.createElement("button");
+        deleteBtn.classList.add("btn", "btn-sm", "btn-danger");
+        deleteBtn.textContent = "Delete";
+        deleteBtn.addEventListener("click", () => {
+          deleteMeetingFile(m.file_name);
+        });
+        actionCell.appendChild(deleteBtn);
+
+        row.appendChild(actionCell);
 
         tbody.appendChild(row);
     });
   }
+
 
     async function deleteMeetingFile(fileName) {
       if (!fileName) {
