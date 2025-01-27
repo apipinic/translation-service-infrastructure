@@ -80,4 +80,11 @@ spec:
                 name: translation-service
                 port:
                   number: 5001
+          - path: /delete_meeting
+            pathType: Prefix
+            backend:
+              service:
+                name: translation-service
+                port:
+                  number: 5001
           

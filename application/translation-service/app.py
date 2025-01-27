@@ -284,6 +284,26 @@ def get_user_info():
     except Exception as e:
         logging.error(f"Error decoding token: {e}")
         return jsonify({"msg": "Invalid token"}), 400
+    
+@app.route('/delete_meeting', methods=['DELETE'])
+def delete_meeting():
+    """
+    Deletes a file from the S3 bucket.
+    """
+    try:
+        token = request.args.get('token')  # optional: Token validation
+        file_name = request.args.get('file_name')
+        if not file_name:
+            return jsonify({"msg": "file_name is required"}), 400
+
+        # Delete the file from S3
+        s3_client.delete_object(Bucket=s3_bucket_name, Key=file_name)
+
+        return jsonify({"msg": "File deleted successfully"}), 200
+
+    except Exception as e:
+        logging.error(f"Error deleting file: {e}")
+        return jsonify({"msg": "Error deleting file"}), 500
 
 @app.route("/health", methods=["GET"])
 def health():

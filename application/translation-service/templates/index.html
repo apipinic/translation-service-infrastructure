@@ -24,7 +24,7 @@
   <!-- Navigation Bar -->
   <nav class="navbar navbar-dark bg-dark">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">Transcription Service</a>
+      <a class="navbar-brand" href="#">Translate Cloud power by AI</a>
       <span class="navbar-text">
         Logged in as: <strong>{{ username }}</strong>
         <a href="/logout" class="ms-3 btn btn-secondary btn-sm">Logout</a>
@@ -33,7 +33,7 @@
   </nav>
 
   <div class="container mt-5">
-    <h1 class="text-center">Whisper Transcription and Translation</h1>
+    <h1 class="text-center">Translation Cloud</h1>
     <p class="text-center">Upload files or perform live translation.</p>
 
     <!-- Tabs -->
@@ -124,7 +124,7 @@
 
   <!-- Bereich: Letzte Meetings -->
   <div class="container mt-5">
-    <h3>Last Meetings</h3>
+    <h3>Last Live Translated Meetings</h3>
     <button id="refreshMeetings" class="btn btn-primary btn-sm mb-3">
       Refresh Meetings
     </button>
@@ -364,11 +364,11 @@
 
         if (!response.ok) {
           const error = await response.json();
-          showNotification("Error saving meeting: " + (error.msg || response.status));
+          alert("Error saving meeting: " + (error.msg || response.status));
           return;
         }
         const resData = await response.json();
-        showNotification("Meeting saved to S3 & DynamoDB: " + resData.file_name);
+        alert("Meeting saved to S3 & DynamoDB: " + resData.file_name);
 
         // Optional: Lade Meeting-Liste neu
         fetchLastMeetings();
@@ -411,7 +411,7 @@
 
     function renderLastMeetings(meetings) {
       const tbody = document.querySelector("#last-meetings-table tbody");
-      tbody.innerHTML = ""; // Tabelle leeren
+      tbody.innerHTML = ""; // Clear the table
 
       meetings.forEach((m) => {
         const row = document.createElement("tr");
@@ -424,19 +424,32 @@
         dateCell.textContent = m.meeting_date || "-";
         row.appendChild(dateCell);
 
-        const downloadCell = document.createElement("td");
+        const actionCell = document.createElement("td");
+
+        // Download Button
         const downloadBtn = document.createElement("button");
-        downloadBtn.classList.add("btn", "btn-sm", "btn-success");
+        downloadBtn.classList.add("btn", "btn-sm", "btn-success", "me-2");
         downloadBtn.textContent = "Download";
         downloadBtn.addEventListener("click", () => {
           downloadMeetingFile(m.file_name);
         });
-        downloadCell.appendChild(downloadBtn);
-        row.appendChild(downloadCell);
+        actionCell.appendChild(downloadBtn);
+
+        // Delete Button
+        const deleteBtn = document.createElement("button");
+        deleteBtn.classList.add("btn", "btn-sm", "btn-danger");
+        deleteBtn.textContent = "Delete";
+        deleteBtn.addEventListener("click", () => {
+          deleteMeetingFile(m.file_name);
+        });
+        actionCell.appendChild(deleteBtn);
+
+        row.appendChild(actionCell);
 
         tbody.appendChild(row);
       });
     }
+
 
     async function downloadMeetingFile(fileName) {
       if (!fileName) {
@@ -515,27 +528,35 @@
     });
   }
 
-
-    async function downloadMeetingFile(fileName) {
+    async function deleteMeetingFile(fileName) {
       if (!fileName) {
-        alert("No file name provided for download.");
+        alert("No file name provided for deletion.");
         return;
       }
+      if (!confirm("Are you sure you want to delete this file?")) {
+        return; // Cancel deletion
+      }
+
       try {
-        const resp = await fetch(`/download_meeting?token=${token}&file_name=${fileName}`);
+        const resp = await fetch(`/delete_meeting?token=${token}&file_name=${fileName}`, {
+          method: "DELETE",
+        });
+
         if (!resp.ok) {
           const err = await resp.json();
-          alert("Error generating download link: " + (err.msg || resp.status));
+          alert("Error deleting file: " + (err.msg || resp.status));
           return;
         }
-        const data = await resp.json();
-        const presignedUrl = data.url;
-        window.open(presignedUrl, "_blank");
+
+        alert("File deleted successfully.");
+        // Refresh the meetings list
+        fetchLastMeetings();
       } catch (error) {
-        console.error("downloadMeetingFile Error:", error);
-        alert("Could not download file.");
+        console.error("deleteMeetingFile Error:", error);
+        alert("Could not delete file.");
       }
     }
+
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
