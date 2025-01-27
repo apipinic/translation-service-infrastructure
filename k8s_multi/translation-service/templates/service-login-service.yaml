@@ -1,0 +1,17 @@
+{{- range .Values.tenants }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: login-service
+  namespace: {{ .namespace }}
+  labels:
+    app: login-service
+spec:
+  selector:
+    app: login-service
+  ports:
+    - protocol: TCP
+      port: {{ $.Values.loginService.port }}
+      targetPort: {{ $.Values.loginService.port }}
+  type: ClusterIP
+{{- end }}

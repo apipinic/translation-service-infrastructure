@@ -1,0 +1,28 @@
+{{- range .Values.tenants }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: translation-service
+  namespace: {{ .namespace }}
+  labels:
+    app: translation-service
+spec:
+  replicas: {{ $.Values.translationService.replicas }}
+  selector:
+    matchLabels:
+      app: translation-service
+  template:
+    metadata:
+      labels:
+        app: translation-service
+    spec:
+      serviceAccountName: {{ $.Values.serviceAccounts.translationService.name | default "translation-service-sa" }}
+      containers:
+      - name: translation-service
+        image: {{ $.Values.translationService.image.repository }}:{{ $.Values.translationService.image.tag }}
+        imagePullPolicy: {{ $.Values.translationService.image.pullPolicy }}
+        ports:
+        - containerPort: {{ $.Values.translationService.port }}
+      imagePullSecrets:
+      - name: {{ $.Values.global.imagePullSecret }}
+{{- end }}

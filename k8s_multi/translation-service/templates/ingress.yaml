@@ -1,0 +1,82 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: translation-service-alb-ingress
+  annotations:
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  ingressClassName: alb
+  rules:
+    {{- range .Values.tenants }}
+    - host: {{ .domain }}
+      http:
+        paths:
+          # Default root path points to Login-Service
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $.Values.loginService.name }}
+                port:
+                  number: {{ $.Values.loginService.port }}
+          # Route to Transcription Service
+          - path: /transcribe
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $.Values.translationService.name }}
+                port:
+                  number: {{ $.Values.translationService.port }}
+          # Route to Live Translation Service
+          - path: /translate_live
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $.Values.translationService.name }}
+                port:
+                  number: {{ $.Values.translationService.port }}
+          # Route /save_meeting => translation-service
+          - path: /save_meeting
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $.Values.translationService.name }}
+                port:
+                  number: {{ $.Values.translationService.port }}
+          # Route /get_last_meetings => translation-service
+          - path: /get_last_meetings
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $.Values.translationService.name }}
+                port:
+                  number: {{ $.Values.translationService.port }}
+          # Route /download_meeting => translation-service
+          - path: /download_meeting
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $.Values.translationService.name }}
+                port:
+                  number: {{ $.Values.translationService.port }}
+          # Route /get_user_info => translation-service
+          - path: /get_user_info
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $.Values.translationService.name }}
+                port:
+                  number: {{ $.Values.translationService.port }}
+          # Route /delete_meeting => translation-service
+          - path: /delete_meeting
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $.Values.translationService.name }}
+                port:
+                  number: {{ $.Values.translationService.port }}
+    {{- end }}
+{{- end }}
