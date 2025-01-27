@@ -170,10 +170,13 @@ def save_meeting():
         file_content = f"Meeting Name: {meeting_name}\nMeeting Date: {meeting_date}\n\nTranscription:\n{transcription}\n\nTranslation:\n{translation}"
         file_name = f"{meeting_name.replace(' ', '_')}_{meeting_date}.txt"
 
+        # S3-Key mit Benutzer-ID erstellen
+        s3_key = f"{user_id}/{file_name}"
+
         # Datei in S3 speichern
         s3_client.put_object(
             Bucket=s3_bucket_name,
-            Key=file_name,
+            Key=s3_key,
             Body=file_content.encode("utf-8")
         )
 
@@ -198,7 +201,6 @@ def save_meeting():
         logging.error(f"An error occurred: {e}")
         return jsonify({"msg": "An unexpected error occurred"}), 500
 
-    
 
 @app.route('/get_last_meetings', methods=['GET'])
 def get_last_meetings():
@@ -207,17 +209,35 @@ def get_last_meetings():
         if not user_id:
             return jsonify({"msg": "User ID is required"}), 400
 
-        # Meetings für den Benutzer aus DynamoDB abrufen
-        response = dynamodb_table.scan(
-            FilterExpression="user_id = :user_id",
-            ExpressionAttributeValues={":user_id": user_id}
+        # Alle Dateien von diesem Benutzer im S3-Bucket abrufen
+        s3_prefix = f"{user_id}/"  # Alle Dateien im Ordner des Benutzers
+        response = s3_client.list_objects_v2(
+            Bucket=s3_bucket_name,
+            Prefix=s3_prefix
         )
-        items = response.get("Items", [])
-        return jsonify(items), 200
+
+        # Überprüfen, ob Dateien vorhanden sind
+        if "Contents" not in response:
+            return jsonify({"msg": "No meetings found for this user"}), 200
+
+        # Liste der Dateien erstellen
+        meetings = []
+        for obj in response["Contents"]:
+            file_key = obj["Key"]
+            file_name = file_key.split("/")[-1]  # Extrahiere den Dateinamen
+            meetings.append({
+                "file_name": file_name,
+                "s3_key": file_key,
+                "last_modified": obj["LastModified"].isoformat(),  # Datum der letzten Änderung
+                "size": obj["Size"]
+            })
+
+        return jsonify(meetings), 200
 
     except Exception as e:
         logging.error(f"Error fetching meetings: {e}")
         return jsonify({"msg": "Error fetching meetings"}), 500
+
     
 @app.route('/download_meeting', methods=['GET'])
 def download_meeting():
