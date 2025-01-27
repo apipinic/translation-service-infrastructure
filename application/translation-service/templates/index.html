@@ -179,20 +179,23 @@
     const TRANSLATE_LIVE_URL = `/translate_live?token=${token}`;
     const SAVEMEETING_URL = `/save_meeting?token=${token}`;
 
-    // Function to load meetings when the page loads
+   // Fetch user ID from token or backend
     window.addEventListener("DOMContentLoaded", async () => {
       try {
-        const response = await fetch(`/get_last_meetings?user_id=${globalUserId}`);
-        if (!response.ok) {
-          console.warn("Could not fetch meetings. Maybe user is not logged in yet.");
-          return;
+        const response = await fetch(`/get_user_info?token=${token}`);
+        if (response.ok) {
+          const userInfo = await response.json();
+          globalUserId = userInfo.user_id;
+          console.log("User ID set:", globalUserId);
+          fetchLastMeetings(); // Automatically fetch last meetings if user ID is valid
+        } else {
+          console.warn("Unable to fetch user info.");
         }
-        const meetings = await response.json();
-        renderLastMeetings(meetings);
       } catch (err) {
-        console.error("Error fetching meetings on page load:", err);
+        console.error("Error fetching user info:", err);
       }
     });
+
 
     // 1) FILE-Upload & Transcription
     document

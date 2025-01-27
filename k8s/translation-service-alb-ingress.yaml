@@ -72,3 +72,12 @@ spec:
                 name: translation-service
                 port:
                   number: 5001
+           # Route /get_user_info => translation-service
+          - path: /get_user_info
+            pathType: Prefix
+            backend:
+              service:
+                name: translation-service
+                port:
+                  number: 5001
+          

@@ -260,6 +260,20 @@ def download_meeting():
     except Exception as e:
         logging.error(f"Error generating presigned URL: {e}")
         return jsonify({"msg": "Error generating presigned URL"}), 500
+    
+@app.route('/get_user_info', methods=['GET'])
+def get_user_info():
+    token = request.args.get('token')
+    if not token:
+        return jsonify({"msg": "Token not found!"}), 401
+
+    try:
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get("sub")
+        return jsonify({"user_id": user_id}), 200
+    except Exception as e:
+        logging.error(f"Error decoding token: {e}")
+        return jsonify({"msg": "Invalid token"}), 400
 
 @app.route("/health", methods=["GET"])
 def health():
