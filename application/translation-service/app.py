@@ -209,26 +209,36 @@ def get_last_meetings():
         if not user_id:
             return jsonify({"msg": "User ID is required"}), 400
 
-        # Alle Dateien von diesem Benutzer im S3-Bucket abrufen
-        s3_prefix = f"{user_id}/"  # Alle Dateien im Ordner des Benutzers
+        # Prefix to filter user's files in the bucket
+        s3_prefix = f"{user_id}/"
         response = s3_client.list_objects_v2(
             Bucket=s3_bucket_name,
             Prefix=s3_prefix
         )
 
-        # Überprüfen, ob Dateien vorhanden sind
         if "Contents" not in response:
             return jsonify({"msg": "No meetings found for this user"}), 200
 
-        # Liste der Dateien erstellen
         meetings = []
         for obj in response["Contents"]:
             file_key = obj["Key"]
-            file_name = file_key.split("/")[-1]  # Extrahiere den Dateinamen
+            file_name = file_key.split("/")[-1]
+
+            # Parse meeting_name and meeting_date from file name
+            if "_" in file_name and file_name.endswith(".txt"):
+                parts = file_name.replace(".txt", "").split("_")
+                meeting_name = parts[0]
+                meeting_date = parts[-1]
+            else:
+                meeting_name = "Unknown"
+                meeting_date = "Unknown"
+
             meetings.append({
                 "file_name": file_name,
+                "meeting_name": meeting_name,
+                "meeting_date": meeting_date,
                 "s3_key": file_key,
-                "last_modified": obj["LastModified"].isoformat(),  # Datum der letzten Änderung
+                "last_modified": obj["LastModified"].isoformat(),
                 "size": obj["Size"]
             })
 

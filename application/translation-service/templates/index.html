@@ -488,7 +488,7 @@
 
     function renderLastMeetings(meetings) {
       const tbody = document.querySelector("#last-meetings-table tbody");
-      tbody.innerHTML = ""; // Tabelle leeren
+      tbody.innerHTML = ""; // Clear the table
 
       meetings.forEach((m) => {
         const row = document.createElement("tr");
@@ -512,8 +512,9 @@
         row.appendChild(downloadCell);
 
         tbody.appendChild(row);
-      });
-    }
+    });
+  }
+
 
     async function downloadMeetingFile(fileName) {
       if (!fileName) {
