@@ -304,6 +304,7 @@ def delete_meeting():
     try:
         token = request.args.get('token')  # optional: Token validation
         file_name = request.args.get('file_name')
+        user_id = decode_token(token).get("sub")  # Extract user ID from the token
 
         if not file_name:
             return jsonify({"msg": "file_name is required"}), 400
