@@ -255,63 +255,73 @@
     });
 
     // 3) LIVE Translation
-    let recognition;
-    let isListening = false;
-    let fullTranscription = "";
-    let fullTranslation = "";
+      let recognition;
+      let isListening = false;
+      let fullTranscription = "";
+      let fullTranslation = "";
 
-    document.getElementById("start").addEventListener("click", () => {
-      if (isListening) return;
-      isListening = true;
-      recognition = new (window.SpeechRecognition ||
-        window.webkitSpeechRecognition)();
-      recognition.lang = "en-US";
-      recognition.interimResults = true;
-      recognition.continuous = true;
+      document.getElementById("start").addEventListener("click", () => {
+        if (isListening) return;
+        isListening = true;
 
-      recognition.onresult = async (e) => {
-        let transcript = "";
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          transcript += e.results[i][0].transcript;
-        }
-        document.getElementById("live-transcription").innerText = transcript;
+        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = "en-US";
+        recognition.interimResults = true;
+        recognition.continuous = true;
 
-        // Wenn dieser Teil final ist, direkt übersetzen lassen
-        if (e.results[e.results.length - 1].isFinal) {
-          fullTranscription += transcript + "\n";
-          try {
-            const response = await fetch(TRANSLATE_LIVE_URL, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ text: transcript }),
-            });
-            if (response.ok) {
-              const data = await response.json();
-              // User-ID global merken (falls nicht schon gespeichert)
-              globalUserId = data.user_id;
-
-              fullTranslation += data.translation + "\n";
-              document.getElementById("live-translation").innerText = fullTranslation;
+        recognition.onresult = async (e) => {
+          let interimTranscript = "";
+          for (let i = e.resultIndex; i < e.results.length; i++) {
+            if (e.results[i].isFinal) {
+              // Append the final transcription
+              fullTranscription += e.results[i][0].transcript + "\n";
             } else {
-              console.error("Translation API Error:", response.statusText);
+              // Accumulate interim transcription
+              interimTranscript += e.results[i][0].transcript;
             }
-          } catch (error) {
-            console.error("Translation API Request Error:", error);
           }
-        }
-      };
 
-      // Sobald recognition von alleine aufhört, neu starten (falls man noch redet)
-      recognition.onend = () => {
-        if (isListening) recognition.start();
-      };
-      recognition.start();
-    });
+          // Update the live transcription field with both final and interim transcriptions
+          document.getElementById("live-transcription").innerText =
+            fullTranscription + interimTranscript;
 
-    document.getElementById("stop").addEventListener("click", () => {
-      isListening = false;
-      if (recognition) recognition.stop();
-    });
+          // Translate final parts only
+          if (e.results[e.results.length - 1].isFinal) {
+            try {
+              const response = await fetch(TRANSLATE_LIVE_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: e.results[e.results.length - 1][0].transcript }),
+              });
+
+              if (response.ok) {
+                const data = await response.json();
+
+                // Update full translation and the live translation field
+                fullTranslation += data.translation + "\n";
+                document.getElementById("live-translation").innerText = fullTranslation;
+              } else {
+                console.error("Translation API Error:", response.statusText);
+              }
+            } catch (error) {
+              console.error("Translation API Request Error:", error);
+            }
+          }
+        };
+
+        // Restart recognition automatically if it stops unexpectedly
+        recognition.onend = () => {
+          if (isListening) recognition.start();
+        };
+
+        recognition.start();
+      });
+
+      document.getElementById("stop").addEventListener("click", () => {
+        isListening = false;
+        if (recognition) recognition.stop();
+      });
+
 
     // 4) Modal öffnen beim Klick auf "Download Meeting Transcript"
     document.getElementById("downloadMeeting").addEventListener("click", () => {
