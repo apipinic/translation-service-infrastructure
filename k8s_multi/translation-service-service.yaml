@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: translation-service
+  namespace: kundea
+spec:
+  selector:
+    app: translation-service
+  ports:
+    - protocol: TCP
+      port: 5001
+      targetPort: 5001
+      nodePort: 31389 # You can specify a port or let Kubernetes assign one automatically
+  type: ClusterIP

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: login-service
+  namespace: kundea
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: login-service
+  template:
+    metadata:
+      labels:
+        app: login-service
+    spec:
+      containers:
+      - name: login-service
+        image: ghcr.io/apipinic/login-translation-service:latest
+        ports:
+        - containerPort: 5000  # Correct port for the login service
+      imagePullSecrets:
+      - name: ghcr-secret  # Reference the secret
