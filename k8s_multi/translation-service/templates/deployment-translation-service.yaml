@@ -1,13 +1,10 @@
-{{- range .Values.tenants }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: translation-service
-  namespace: {{ .namespace }}
-  labels:
-    app: translation-service
+  namespace: {{ .Values.namespace }}
 spec:
-  replicas: {{ $.Values.translationService.replicas }}
+  replicas: {{ .Values.translationService.replicas }}
   selector:
     matchLabels:
       app: translation-service
@@ -16,13 +13,11 @@ spec:
       labels:
         app: translation-service
     spec:
-      serviceAccountName: {{ $.Values.serviceAccounts.translationService.name | default "translation-service-sa" }}
+      serviceAccountName: translation-service-sa
       containers:
       - name: translation-service
-        image: {{ $.Values.translationService.image.repository }}:{{ $.Values.translationService.image.tag }}
-        imagePullPolicy: {{ $.Values.translationService.image.pullPolicy }}
+        image: {{ .Values.translationService.image }}
         ports:
-        - containerPort: {{ $.Values.translationService.port }}
+        - containerPort: {{ .Values.translationService.port }}
       imagePullSecrets:
-      - name: {{ $.Values.global.imagePullSecret }}
-{{- end }}
+      - name: ghcr-secret

@@ -1,13 +1,10 @@
-{{- range .Values.tenants }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: login-service
-  namespace: {{ .namespace }}
-  labels:
-    app: login-service
+  namespace: {{ .Values.namespace }}
 spec:
-  replicas: {{ $.Values.loginService.replicas }}
+  replicas: {{ .Values.loginService.replicas }}
   selector:
     matchLabels:
       app: login-service
@@ -18,10 +15,8 @@ spec:
     spec:
       containers:
       - name: login-service
-        image: {{ $.Values.loginService.image.repository }}:{{ $.Values.loginService.image.tag }}
-        imagePullPolicy: {{ $.Values.loginService.image.pullPolicy }}
+        image: {{ .Values.loginService.image }}
         ports:
-        - containerPort: {{ $.Values.loginService.port }}
+        - containerPort: {{ .Values.loginService.port }}
       imagePullSecrets:
-      - name: {{ $.Values.global.imagePullSecret }}
-{{- end }}
+      - name: ghcr-secret

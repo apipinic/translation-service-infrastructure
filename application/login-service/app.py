@@ -135,8 +135,12 @@ def callback():
                 "email": users_email
             })
             logging.debug(f"JWT token generated: {access_token}")
+        
+            current_host = request.host  # z.B. kundea.translation-cloud.at
+            logging.debug(f"Current host: {current_host}")
 
-            translation_service_url = f"https://translation-cloud.at/transcribe?token={access_token}"
+            # Weiterleitung zur passenden Subdomain
+            translation_service_url = f"https://{current_host}/transcribe?token={access_token}"
             return redirect(translation_service_url)
 
         else:
