@@ -179,6 +179,21 @@
     const TRANSLATE_LIVE_URL = `/translate_live?token=${token}`;
     const SAVEMEETING_URL = `/save_meeting?token=${token}`;
 
+    // Function to load meetings when the page loads
+    window.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const response = await fetch(`/get_last_meetings?user_id=${globalUserId}`);
+        if (!response.ok) {
+          console.warn("Could not fetch meetings. Maybe user is not logged in yet.");
+          return;
+        }
+        const meetings = await response.json();
+        renderLastMeetings(meetings);
+      } catch (err) {
+        console.error("Error fetching meetings on page load:", err);
+      }
+    });
+
     // 1) FILE-Upload & Transcription
     document
       .getElementById("uploadForm")
@@ -346,11 +361,11 @@
 
         if (!response.ok) {
           const error = await response.json();
-          alert("Error saving meeting: " + (error.msg || response.status));
+          showNotification("Error saving meeting: " + (error.msg || response.status));
           return;
         }
         const resData = await response.json();
-        alert("Meeting saved to S3 & DynamoDB: " + resData.file_name);
+        showNotification("Meeting saved to S3 & DynamoDB: " + resData.file_name);
 
         // Optional: Lade Meeting-Liste neu
         fetchLastMeetings();
@@ -447,6 +462,76 @@
     document
       .getElementById("refreshMeetings")
       .addEventListener("click", fetchLastMeetings);
+
+    async function fetchLastMeetings() {
+      if (!globalUserId) {
+        alert("No user ID found. Please transcribe or speak first.");
+        return;
+      }
+      try {
+        const res = await fetch(`/get_last_meetings?user_id=${globalUserId}`);
+        if (!res.ok) {
+          const error = await res.json();
+          alert("Error fetching meetings: " + (error.msg || res.status));
+          return;
+        }
+        const items = await res.json();
+        renderLastMeetings(items);
+      } catch (err) {
+        console.error(err);
+        alert("An error occurred while fetching meetings.");
+      }
+    }
+
+    function renderLastMeetings(meetings) {
+      const tbody = document.querySelector("#last-meetings-table tbody");
+      tbody.innerHTML = ""; // Tabelle leeren
+
+      meetings.forEach((m) => {
+        const row = document.createElement("tr");
+
+        const nameCell = document.createElement("td");
+        nameCell.textContent = m.meeting_name || "-";
+        row.appendChild(nameCell);
+
+        const dateCell = document.createElement("td");
+        dateCell.textContent = m.meeting_date || "-";
+        row.appendChild(dateCell);
+
+        const downloadCell = document.createElement("td");
+        const downloadBtn = document.createElement("button");
+        downloadBtn.classList.add("btn", "btn-sm", "btn-success");
+        downloadBtn.textContent = "Download";
+        downloadBtn.addEventListener("click", () => {
+          downloadMeetingFile(m.file_name);
+        });
+        downloadCell.appendChild(downloadBtn);
+        row.appendChild(downloadCell);
+
+        tbody.appendChild(row);
+      });
+    }
+
+    async function downloadMeetingFile(fileName) {
+      if (!fileName) {
+        alert("No file name provided for download.");
+        return;
+      }
+      try {
+        const resp = await fetch(`/download_meeting?token=${token}&file_name=${fileName}`);
+        if (!resp.ok) {
+          const err = await resp.json();
+          alert("Error generating download link: " + (err.msg || resp.status));
+          return;
+        }
+        const data = await resp.json();
+        const presignedUrl = data.url;
+        window.open(presignedUrl, "_blank");
+      } catch (error) {
+        console.error("downloadMeetingFile Error:", error);
+        alert("Could not download file.");
+      }
+    }
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
