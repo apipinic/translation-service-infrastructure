@@ -304,11 +304,18 @@ def delete_meeting():
     try:
         token = request.args.get('token')  # optional: Token validation
         file_name = request.args.get('file_name')
+
         if not file_name:
             return jsonify({"msg": "file_name is required"}), 400
 
+        if not user_id:
+            return jsonify({"msg": "Invalid user ID"}), 401
+
+        # Add user-specific prefix to the file key
+        s3_key = f"{user_id}/{file_name}"
+
         # Delete the file from S3
-        s3_client.delete_object(Bucket=s3_bucket_name, Key=file_name)
+        s3_client.delete_object(Bucket=s3_bucket_name, Key=s3_key)
 
         return jsonify({"msg": "File deleted successfully"}), 200
 
