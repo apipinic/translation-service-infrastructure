@@ -48,6 +48,7 @@ jobs:
 
     - name: Create ArgoCD Application YAML
       run: |
+        mkdir -p argocd/applications  # Erstelle den Ordner, falls er nicht existiert
         cat <<EOF > argocd/applications/${CUSTOMER_NAME}-application.yaml
         apiVersion: argoproj.io/v1alpha1
         kind: Application
@@ -71,6 +72,7 @@ jobs:
               prune: true
               selfHeal: true
         EOF
+
 
     - name: Configure Git for PAT_TOKEN
       env:
