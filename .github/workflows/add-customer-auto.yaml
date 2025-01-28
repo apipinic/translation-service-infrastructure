@@ -2,10 +2,11 @@ name: Auto-Deploy New Customer to ArgoCD
 
 on:
   push:
+    branches:
+      - main  # Ensure this workflow runs on pushes to main
     paths:
       - "k8s_multi/translation-service/customers/**/values.yaml"
-  workflow_dispatch:
-
+      
 jobs:
   deploy_new_customer:
     runs-on: ubuntu-latest
@@ -75,9 +76,12 @@ jobs:
         git config user.email "actions@github.com"
         git add argocd/applications/${CUSTOMER_NAME}-application.yaml
         git commit -m "Add new customer ${CUSTOMER_NAME} to ArgoCD"
-        git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}
-        git push origin HEAD:main
         
+        git remote remove origin || true
+        git remote add origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}
+    
+        git push origin HEAD:main
+
     - name: Deploy Application to ArgoCD
       run: |
         kubectl apply -f argocd/applications/${CUSTOMER_NAME}-application.yaml
