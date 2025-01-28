@@ -56,24 +56,47 @@ jobs:
             #-t ghcr.io/${{ github.repository_owner }}/translation-service:$IMAGE_TAG .
           #docker push ghcr.io/${{ github.repository_owner }}/translation-service:$IMAGE_TAG
 
-     # 5. Update values.yaml with the New Image Tag
       - name: Update values.yaml with New Image Tag
         run: |
           IMAGE_TAG=$(git rev-parse --short HEAD)  # Commit Hash als Tag
-          
+          echo "Using IMAGE_TAG: $IMAGE_TAG"  # Debugging: Print the IMAGE_TAG
+
+          # Check the current state of values.yaml before updating
+          echo "Current content of values.yaml:"
+          cat k8s_multi/translation-service/values.yaml
+
           # Update values.yaml with the new image tag for login-service and translation-service
           sed -i "s/tag: \"latest\"/tag: \"$IMAGE_TAG\"/" k8s_multi/translation-service/values.yaml
-          
+
+          # Debugging: Print the updated content of values.yaml after sed
+          echo "Updated content of values.yaml:"
+          cat k8s_multi/translation-service/values.yaml
+
+          # Check if Git sees any changes (use git diff)
+          echo "Checking for changes in values.yaml:"
+          git diff k8s_multi/translation-service/values.yaml
+
           # Stage the updated values.yaml
           git add k8s_multi/translation-service/values.yaml
-          
+
+          # Check the status of the repository to ensure the file is staged
+          echo "Git status after adding the file:"
+          git status
+
           # Set up Git user name and email
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          
-          # Commit the changes
-          git commit -m "Update Docker image tag to $IMAGE_TAG"
-          
+
+          # Check for uncommitted changes and commit the changes
+          git commit -a -m "Update Docker image tag to $IMAGE_TAG" || echo "No changes to commit"
+
           # Set up git with PAT for pushing changes
           git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}
+          
+          # Push the changes
+          echo "Pushing changes to GitHub..."
           git push origin HEAD:main
+
+          # Debugging: Verify if the push was successful by checking the log
+          echo "Git log after push:"
+          git log -n 1 --oneline
