@@ -56,30 +56,33 @@ jobs:
             #-t ghcr.io/${{ github.repository_owner }}/translation-service:$IMAGE_TAG .
           #docker push ghcr.io/${{ github.repository_owner }}/translation-service:$IMAGE_TAG
 
-      - name: Update values.yaml with New Image Tag
+      - name: Install yq
+        run: |
+          # Installiere yq (falls nicht bereits verfügbar)
+          wget https://github.com/mikefarah/yq/releases/download/v4.15.1/yq_linux_amd64 -O /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
+
+      - name: Update values.yaml with New Image Tag using yq
         run: |
           IMAGE_TAG=$(git rev-parse --short HEAD)  # Commit Hash als Tag
           echo "Using IMAGE_TAG: $IMAGE_TAG"  # Debugging: Print the IMAGE_TAG
 
-          # Check the current state of values.yaml before updating
+          # Debugging: Zeige den aktuellen Inhalt von values.yaml an, bevor wir es ändern
           echo "Current content of values.yaml:"
           cat k8s_multi/translation-service/values.yaml
 
-          # Update values.yaml with the new image tag for login-service and translation-service
-          sed -i "s/tag: \"latest\"/tag: \"$IMAGE_TAG\"/" k8s_multi/translation-service/values.yaml
+          # Update values.yaml using yq
+          yq eval ".loginService.image = \"ghcr.io/${{ github.repository_owner }}/login-translation-service:$IMAGE_TAG\"" -i k8s_multi/translation-service/values.yaml
+          yq eval ".translationService.image = \"ghcr.io/${{ github.repository_owner }}/translation-service:$IMAGE_TAG\"" -i k8s_multi/translation-service/values.yaml
 
-          # Debugging: Print the updated content of values.yaml after sed
-          echo "Updated content of values.yaml:"
+          # Debugging: Zeige den aktualisierten Inhalt von values.yaml an
+          echo "Updated content of values.yaml after yq:"
           cat k8s_multi/translation-service/values.yaml
-
-          # Check if Git sees any changes (use git diff)
-          echo "Checking for changes in values.yaml:"
-          git diff k8s_multi/translation-service/values.yaml
 
           # Stage the updated values.yaml
           git add k8s_multi/translation-service/values.yaml
 
-          # Check the status of the repository to ensure the file is staged
+          # Git-Status prüfen
           echo "Git status after adding the file:"
           git status
 
@@ -87,7 +90,7 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-          # Check for uncommitted changes and commit the changes
+          # Commit the changes
           git commit -a -m "Update Docker image tag to $IMAGE_TAG" || echo "No changes to commit"
 
           # Set up git with PAT for pushing changes
@@ -97,6 +100,7 @@ jobs:
           echo "Pushing changes to GitHub..."
           git push origin HEAD:main
 
-          # Debugging: Verify if the push was successful by checking the log
+          # Debugging: Überprüfe den Commit-Log nach dem Push
           echo "Git log after push:"
           git log -n 1 --oneline
+
