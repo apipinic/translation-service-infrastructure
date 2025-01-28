@@ -33,22 +33,42 @@ jobs:
       - name: Build and Push Login Translation Service
         working-directory: ./application/login-service
         run: |
+          IMAGE_TAG=$(git rev-parse --short HEAD)  # Commit Hash als Tag
           docker build \
             --build-arg SECRET_KEY=${{ secrets.SECRET_KEY }} \
             --build-arg JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
             --build-arg GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} \
             --build-arg GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }} \
-            -t ghcr.io/${{ github.repository_owner }}/login-translation-service:latest .
-          docker push ghcr.io/${{ github.repository_owner }}/login-translation-service:latest
+            -t ghcr.io/${{ github.repository_owner }}/login-translation-service:$IMAGE_TAG .
+          docker push ghcr.io/${{ github.repository_owner }}/login-translation-service:$IMAGE_TAG
+
 
       # 4. Build and Push Translation Service
       - name: Build and Push Translation Service
         working-directory: ./application/translation-service
         run: |
+          IMAGE_TAG=$(git rev-parse --short HEAD)  # Commit Hash als Tag
           docker build \
             --build-arg SECRET_KEY=${{ secrets.SECRET_KEY }} \
             --build-arg JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
             --build-arg S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} \
             --build-arg DYNAMODB_TABLE=${{ secrets.DYNAMODB_TABLE }} \
-            -t ghcr.io/${{ github.repository_owner }}/translation-service:latest .
-          docker push ghcr.io/${{ github.repository_owner }}/translation-service:latest
+            -t ghcr.io/${{ github.repository_owner }}/translation-service:$IMAGE_TAG .
+          docker push ghcr.io/${{ github.repository_owner }}/translation-service:$IMAGE_TAG
+
+    # 6. Update values.yaml with New Image Tag
+      - name: Update values.yaml with New Image Tag
+        run: |
+          IMAGE_TAG=$(git rev-parse --short HEAD)  # Commit Hash als Tag
+          # Update values.yaml mit dem neuen Tag für login-service und translation-service
+          sed -i "s/tag: \"latest\"/tag: \"$IMAGE_TAG\"/" k8s_multi/translation-service/values.yaml
+          git add k8s_multi/translation-service/values.yaml
+          git commit -m "Update Docker image tag to $IMAGE_TAG"
+          
+          # Set up git with PAT for pushing changes
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          
+          # Force push using PAT_TOKEN-authenticated remote
+          git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}
+          git push origin HEAD:main
