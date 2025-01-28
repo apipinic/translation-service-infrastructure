@@ -1,0 +1,71 @@
+name: Auto-Deploy New Customer to ArgoCD
+
+on:
+  push:
+    paths:
+      - "k8s_multi/translation-service/customers/**/values.yaml"
+  workflow_dispatch:
+
+jobs:
+  deploy_new_customer:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Get Kubernetes Credentials
+      run: |
+        aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+
+    - name: Extract Customer Name
+      id: extract
+      run: |
+        CUSTOMER_NAME=$(ls k8s_multi/translation-service/customers | tail -n 1)
+        echo "CUSTOMER_NAME=$CUSTOMER_NAME" >> $GITHUB_ENV
+        echo "Detected new customer: $CUSTOMER_NAME"
+
+    - name: Create ArgoCD Application YAML
+      run: |
+        cat <<EOF > argocd/applications/${CUSTOMER_NAME}-application.yaml
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: ${CUSTOMER_NAME}
+          namespace: argocd
+        spec:
+          project: translation-cloud-multi-tenant
+          source:
+            repoURL: https://github.com/${{ github.repository }}
+            targetRevision: HEAD
+            path: k8s_multi/translation-service
+            helm:
+              valueFiles:
+                - customers/${CUSTOMER_NAME}/values.yaml
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: ${CUSTOMER_NAME}
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+        EOF
+
+    - name: Commit and Push New ArgoCD Application
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git add argocd/applications/${CUSTOMER_NAME}-application.yaml
+        git commit -m "Add new customer ${CUSTOMER_NAME} to ArgoCD"
+        git push
+
+    - name: Deploy Application to ArgoCD
+      run: |
+        kubectl apply -f argocd/applications/${CUSTOMER_NAME}-application.yaml
