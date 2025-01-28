@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.DEBUG)
 # Initialize Flask app
 app = Flask(__name__)
 
-# Load JWT secret key from environment variable
+# Load JWT secret key from environment variabl
 jwt_secret_key = os.environ.get("JWT_SECRET_KEY")
 if not jwt_secret_key:
     raise RuntimeError("JWT_SECRET_KEY is not set.")
