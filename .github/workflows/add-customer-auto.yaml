@@ -42,6 +42,10 @@ jobs:
         echo "CUSTOMER_NAME=$CUSTOMER_NAME" >> $GITHUB_ENV
         echo "Detected new customer: $CUSTOMER_NAME"
 
+    - name: Ensure Namespace Exists
+      run: |
+        kubectl get namespace ${CUSTOMER_NAME} || kubectl create namespace ${CUSTOMER_NAME}
+
     - name: Create ArgoCD Application YAML
       run: |
         cat <<EOF > argocd/applications/${CUSTOMER_NAME}-application.yaml

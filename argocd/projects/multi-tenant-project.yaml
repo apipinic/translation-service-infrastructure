@@ -8,10 +8,8 @@ spec:
   sourceRepos:
     - https://github.com/apipinic/translation-service-infrastructure
   destinations:
-    - namespace: kundea
-      server: https://kubernetes.default.svc
-    - namespace: kundeb
-      server: https://kubernetes.default.svc
+    - namespace: "*"
+      server: https://kubernetes.default.svc  # Allows all future namespaces
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"
