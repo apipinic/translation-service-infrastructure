@@ -11,7 +11,7 @@ spec:
   containers:
     - name: login-service-test
       image: curlimages/curl:latest
-      command: ["curl", "-f", "http://{{ include "translation-service.fullname" . }}:{{ .Values.loginService.port }}/health"]
+      command: ["curl", "-f", "http://{{ include "login-service.fullname" . }}:{{ .Values.loginService.port }}/health"]
     - name: translation-service-test
       image: curlimages/curl:latest
       command: ["curl", "-f", "http://{{ include "translation-service.fullname" . }}:{{ .Values.translationService.port }}/health"]
