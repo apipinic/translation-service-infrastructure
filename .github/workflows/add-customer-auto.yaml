@@ -66,7 +66,7 @@ jobs:
         git config user.email "actions@github.com"
         git add argocd/applications/${CUSTOMER_NAME}-application.yaml
         git commit -m "Add new customer ${CUSTOMER_NAME} to ArgoCD"
-        git push
+        git push https://x-access-token:${TOKEN}@github.com/${{ github.repository }} HEAD:main
 
     - name: Deploy Application to ArgoCD
       run: |
