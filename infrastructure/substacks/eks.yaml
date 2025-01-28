@@ -356,37 +356,35 @@ Resources:
         - !Ref PublicSubnet02
       NodegroupName: !Sub "${AWS::StackName}-EKS-public-workers"
       ScalingConfig:
-        MinSize: 2
-        DesiredSize: 2
-        MaxSize: 4
-      DiskSize: 100 # Erhöhe auf 100 GB
+        MinSize: 1
+        DesiredSize: 1
+        MaxSize: 2
+      DiskSize: 100  # DiskSize auf 100 GB erhöhen
       InstanceTypes:
-        - c5.large # Nutze nur c5.large
+        - c5.large  # Nur c5.large verwenden
       AmiType: AL2_x86_64
       RemoteAccess:
         Ec2SshKey: !Ref SshKeyName
 
   PrivateNodeGroup:
-    Type: 'AWS::EKS::Nodegroup'
-    Properties:
-      ClusterName: !Ref EKSCluster
-      NodeRole: !GetAtt EKSNodeGroupRole.Arn
-      Subnets:
-        - !Ref PrivateSubnet01
-        - !Ref PrivateSubnet02
-      NodegroupName: !Sub "${AWS::StackName}-EKS-private-workers"
-      ScalingConfig:
-        MinSize: 1
-        DesiredSize: 1
-        MaxSize: 2
-      DiskSize: 20
-      InstanceTypes:
-        - t3.medium
-        - m5.large
-        - c5.large
-      AmiType: AL2_x86_64
-      RemoteAccess:
-        Ec2SshKey: !Ref SshKeyName
+  Type: 'AWS::EKS::Nodegroup'
+  Properties:
+    ClusterName: !Ref EKSCluster
+    NodeRole: !GetAtt EKSNodeGroupRole.Arn
+    Subnets:
+      - !Ref PrivateSubnet01
+      - !Ref PrivateSubnet02
+    NodegroupName: !Sub "${AWS::StackName}-EKS-private-workers"
+    ScalingConfig:
+      MinSize: 1
+      DesiredSize: 1
+      MaxSize: 2
+    DiskSize: 100  # DiskSize auf 100 GB erhöhen
+    InstanceTypes:
+      - c5.large  # Nur c5.large verwenden
+    AmiType: AL2_x86_64
+    RemoteAccess:
+      Ec2SshKey: !Ref SshKeyName
       Labels:
         privateNetworking: "true"
 
