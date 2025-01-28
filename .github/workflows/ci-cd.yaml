@@ -56,12 +56,15 @@ jobs:
             #-t ghcr.io/${{ github.repository_owner }}/translation-service:$IMAGE_TAG .
           #docker push ghcr.io/${{ github.repository_owner }}/translation-service:$IMAGE_TAG
 
-    # 6. Update values.yaml with New Image Tag
+     # 5. Update values.yaml with the New Image Tag
       - name: Update values.yaml with New Image Tag
         run: |
           IMAGE_TAG=$(git rev-parse --short HEAD)  # Commit Hash als Tag
-          # Update values.yaml mit dem neuen Tag für login-service und translation-service
+          
+          # Update values.yaml with the new image tag for login-service and translation-service
           sed -i "s/tag: \"latest\"/tag: \"$IMAGE_TAG\"/" k8s_multi/translation-service/values.yaml
+          
+          # Stage the updated values.yaml
           git add k8s_multi/translation-service/values.yaml
           
           # Set up Git user name and email
