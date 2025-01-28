@@ -1,0 +1,16 @@
+namespace: kundef
+
+ingress:
+  certificateArn: arn:aws:acm:eu-central-1:660242195002:certificate/83cc3b71-7d65-4476-b7b9-516374638473
+  rules:
+    - host: kundef.translation-cloud.at
+      paths:
+        - path: /
+          service: login-service
+          port: 5000
+        - path: /transcribe
+          service: translation-service
+          port: 5001
+
+dockerconfigjson: "eyJhdXRocyI6eyJnaGNyLmlvIjp7InVzZXJuYW1lIjoiYXBpcGluaWMiLCJwYXNzd29yZCI6ImdocF82ZUdvNnRqcXltRHhVdFV2UFgydGF3bmhkVlBjZzkzNDQyTkMiLCJhdXRoIjoiWVhCcGNHbHVhV002WjJod1h6WmxSMjgyZEdweGVXMUVlRlYwVlhaUVdESjBZWGR1YUdSV1VHTm5PVE0wTkRKT1F3PT0ifX19Cg=="  # Base64-encoded .dockerconfigjson data
+
