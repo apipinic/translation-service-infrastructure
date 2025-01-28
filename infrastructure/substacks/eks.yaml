@@ -359,11 +359,9 @@ Resources:
         MinSize: 2
         DesiredSize: 2
         MaxSize: 4
-      DiskSize: 20
+      DiskSize: 100 # Erhöhe auf 100 GB
       InstanceTypes:
-        - t3.medium
-        - m5.large
-        - c5.large
+        - c5.large # Nutze nur c5.large
       AmiType: AL2_x86_64
       RemoteAccess:
         Ec2SshKey: !Ref SshKeyName

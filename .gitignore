@@ -8,3 +8,4 @@ application/.DS_Store
 .DS_Store
 .DS_Store
 .DS_Store
+k8s/argocd-loadbalancer.yaml
