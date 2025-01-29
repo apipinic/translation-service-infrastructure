@@ -4,11 +4,11 @@ ingress:
   host: kundeb.translation-cloud.at
 loginService:
   replicas: 2 # Number of replicas for login service
-  image: ghcr.io/apipinic/login-translation-service:1a7aca8 # Login service image version
+  image: ghcr.io/apipinic/login-translation-service:cabe29e # Login service image version
   port: 5000 # Port for the login service
 translationService:
   replicas: 2 # Anzahl der Replikate für den translation service
-  image: ghcr.io/apipinic/translation-service:1a7aca8 # Container-Image für den translation service
+  image: ghcr.io/apipinic/translation-service:cabe29e # Container-Image für den translation service
   port: 5001 # Port für den translation service
 serviceAccount:
   roleArn: arn:aws:iam::660242195002:role/EKS-DynamoDB-S3-Role # IAM role for service account
