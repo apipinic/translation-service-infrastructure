@@ -1,29 +1,22 @@
 namespace: kundeb
-
 ingress:
   certificateArn: arn:aws:acm:eu-central-1:660242195002:certificate/83cc3b71-7d65-4476-b7b9-516374638473
   host: kundeb.translation-cloud.at
-
 loginService:
-  replicas: 2  # Number of replicas for login service
-  image: ghcr.io/apipinic/login-translation-service:108c862  # Login service image version
-  port: 5000  # Port for the login service
-
+  replicas: 2 # Number of replicas for login service
+  image: ghcr.io/apipinic/login-translation-service:1a7aca8 # Login service image version
+  port: 5000 # Port for the login service
 translationService:
-  replicas: 2  # Anzahl der Replikate für den translation service
-  image: ghcr.io/apipinic/translation-service:108c862  # Container-Image für den translation service
-  port: 5001  # Port für den translation service
-
+  replicas: 2 # Anzahl der Replikate für den translation service
+  image: ghcr.io/apipinic/translation-service:1a7aca8 # Container-Image für den translation service
+  port: 5001 # Port für den translation service
 serviceAccount:
-  roleArn: arn:aws:iam::660242195002:role/EKS-DynamoDB-S3-Role  # IAM role for service account
-
+  roleArn: arn:aws:iam::660242195002:role/EKS-DynamoDB-S3-Role # IAM role for service account
 autoscaling:
-  enabled: true  # Enable auto-scaling
-  minReplicas: 2  # Minimum number of replicas
-  maxReplicas: 10  # Maximum number of replicas
-  targetCPUUtilizationPercentage: 80  # Target CPU utilization for autoscaling
-
+  enabled: true # Enable auto-scaling
+  minReplicas: 2 # Minimum number of replicas
+  maxReplicas: 10 # Maximum number of replicas
+  targetCPUUtilizationPercentage: 80 # Target CPU utilization for autoscaling
 service:
-  type: ClusterIP  # Service type for internal communication (can be ClusterIP, NodePort, or LoadBalancer)
-
-dockerconfigjson: "eyJhdXRocyI6eyJnaGNyLmlvIjp7InVzZXJuYW1lIjoiYXBpcGluaWMiLCJwYXNzd29yZCI6ImdocF82ZUdvNnRqcXltRHhVdFV2UFgydGF3bmhkVlBjZzkzNDQyTkMiLCJhdXRoIjoiWVhCcGNHbHVhV002WjJod1h6WmxSMjgyZEdweGVXMUVlRlYwVlhaUVdESjBZWGR1YUdSV1VHTm5PVE0wTkRKT1F3PT0ifX19Cg=="  # Base64-encoded .dockerconfigjson data
+  type: ClusterIP # Service type for internal communication (can be ClusterIP, NodePort, or LoadBalancer)
+dockerconfigjson: "eyJhdXRocyI6eyJnaGNyLmlvIjp7InVzZXJuYW1lIjoiYXBpcGluaWMiLCJwYXNzd29yZCI6ImdocF82ZUdvNnRqcXltRHhVdFV2UFgydGF3bmhkVlBjZzkzNDQyTkMiLCJhdXRoIjoiWVhCcGNHbHVhV002WjJod1h6WmxSMjgyZEdweGVXMUVlRlYwVlhaUVdESjBZWGR1YUdSV1VHTm5PVE0wTkRKT1F3PT0ifX19Cg==" # Base64-encoded .dockerconfigjson data
