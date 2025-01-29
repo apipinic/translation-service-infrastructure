@@ -1,9 +1,9 @@
-namespace: kundec
+namespace: kundeb
 
 ingress:
   certificateArn: arn:aws:acm:eu-central-1:660242195002:certificate/83cc3b71-7d65-4476-b7b9-516374638473
   rules:
-    - host: kundec.translation-cloud.at
+    - host: kundeb.translation-cloud.at
       paths:
         - path: /
           service: login-service
