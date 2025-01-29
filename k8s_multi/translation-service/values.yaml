@@ -1,30 +1,48 @@
 global:
   imagePullSecret: ghcr-secret
+
 loginService:
   replicas: 2
   image: ghcr.io/apipinic/login-translation-service:108c862
   port: 5000
+  nodeSelector:
+    beta.kubernetes.io/instance-type: t3.medium
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - login-service
+          topologyKey: "kubernetes.io/hostname"
+
 translationService:
   replicas: 2
   image: ghcr.io/apipinic/translation-service:108c862
   port: 5001
-ingress:
-  certificateArn: arn:aws:acm:eu-central-1:660242195002:certificate/83cc3b71-7d65-4476-b7b9-516374638473
-  rules:
-    - host: translation-cloud.at
-      paths:
-        - path: /
-          service: login-service
-          port: 5000
-        - path: /transcribe
-          service: translation-service
-          port: 5001
+  nodeSelector:
+    high-performance: "true"
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - translation-service
+          topologyKey: "kubernetes.io/hostname"
+
 serviceAccount:
   roleArn: arn:aws:iam::660242195002:role/EKS-DynamoDB-S3-Role
+
 autoscaling:
   enabled: true # Set to true if you want autoscaling
   minReplicas: 2
   maxReplicas: 10
   targetCPUUtilizationPercentage: 80
+
 service:
   type: ClusterIP # Options: ClusterIP, NodePort, LoadBalancer
