@@ -438,7 +438,7 @@
         const res = await fetch(`/get_last_meetings?user_id=${globalUserId}`);
         if (!res.ok) {
           const error = await res.json();
-          alert("Error fetching meetings: " + (error.msg || res.status));
+          //alert("Error fetching meetings: " + (error.msg || res.status));
           return;
         }
         const items = await res.json();
