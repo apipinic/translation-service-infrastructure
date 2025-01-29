@@ -44,17 +44,17 @@ jobs:
 
 
       # 4. Build and Push Translation Service
-      #- name: Build and Push Translation Service
-        #working-directory: ./application/translation-service
-        #run: |
-         # IMAGE_TAG=$(git rev-parse --short HEAD)  # Commit Hash als Tag
-         # docker build \
-          #  --build-arg SECRET_KEY=${{ secrets.SECRET_KEY }} \
-           # --build-arg JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
-            #--build-arg S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} \
-            #--build-arg DYNAMODB_TABLE=${{ secrets.DYNAMODB_TABLE }} \
-            #-t ghcr.io/${{ github.repository_owner }}/translation-service:$IMAGE_TAG .
-          #docker push ghcr.io/${{ github.repository_owner }}/translation-service:$IMAGE_TAG
+      - name: Build and Push Translation Service
+        working-directory: ./application/translation-service
+        run: |
+          IMAGE_TAG=$(git rev-parse --short HEAD)  # Commit Hash als Tag
+          docker build \
+            --build-arg SECRET_KEY=${{ secrets.SECRET_KEY }} \
+            --build-arg JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
+            --build-arg S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} \
+            --build-arg DYNAMODB_TABLE=${{ secrets.DYNAMODB_TABLE }} \
+            -t ghcr.io/${{ github.repository_owner }}/translation-service:$IMAGE_TAG .
+          docker push ghcr.io/${{ github.repository_owner }}/translation-service:$IMAGE_TAG
 
       - name: Install yq
         run: |
