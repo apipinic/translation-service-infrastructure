@@ -25,3 +25,5 @@ autoscaling:
 
 service:
   type: ClusterIP  # Service type for internal communication (can be ClusterIP, NodePort, or LoadBalancer)
+
+dockerconfigjson: "eyJhdXRocyI6eyJnaGNyLmlvIjp7InVzZXJuYW1lIjoiYXBpcGluaWMiLCJwYXNzd29yZCI6ImdocF82ZUdvNnRqcXltRHhVdFV2UFgydGF3bmhkVlBjZzkzNDQyTkMiLCJhdXRoIjoiWVhCcGNHbHVhV002WjJod1h6WmxSMjgyZEdweGVXMUVlRlYwVlhaUVdESjBZWGR1YUdSV1VHTm5PVE0wTkRKT1F3PT0ifX19Cg=="  # Base64-encoded .dockerconfigjson data
