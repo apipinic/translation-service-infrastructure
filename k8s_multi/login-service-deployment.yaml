@@ -20,3 +20,6 @@ spec:
         - containerPort: 5000  # Correct port for the login service
       imagePullSecrets:
       - name: ghcr-secret  # Reference the secret
+      nodeSelector:
+        login-service: "true"  
+

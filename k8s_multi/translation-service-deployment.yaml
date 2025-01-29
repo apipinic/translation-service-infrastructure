@@ -21,3 +21,5 @@ spec:
         - containerPort: 5001  # Correct port for the translation service
       imagePullSecrets:
       - name: ghcr-secret  # Reference the secret
+      nodeSelector:
+        high-memory: "true"

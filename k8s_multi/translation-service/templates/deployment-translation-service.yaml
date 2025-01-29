@@ -21,3 +21,5 @@ spec:
         - containerPort: {{ .Values.translationService.port }}
       imagePullSecrets:
       - name: ghcr-secret
+      nodeSelector:
+        high-memory: "true"
