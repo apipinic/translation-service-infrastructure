@@ -5,18 +5,16 @@ loginService:
   replicas: 2
   image: ghcr.io/apipinic/login-translation-service:108c862
   port: 5000
-  nodeSelector:
-    login-service: "true"
+  nodeSelector: {} # Entfernen oder leer lassen
   affinity:
-    podAntiAffinity:
+    nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchExpressions:
-              - key: app
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: login-service
                 operator: In
                 values:
-                  - login-service
-          topologyKey: "kubernetes.io/hostname"
+                  - "true"
 
 translationService:
   replicas: 2
