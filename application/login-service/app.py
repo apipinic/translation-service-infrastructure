@@ -9,7 +9,7 @@ import os
 import json
 import logging
 
-# Enable OAuth for development over HTTPP
+# Enable OAuth for development over HTTP
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 # Logging setup
