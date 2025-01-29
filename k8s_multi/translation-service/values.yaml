@@ -28,5 +28,3 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
 service:
   type: ClusterIP # Options: ClusterIP, NodePort, LoadBalancer
-namespace: kundea # Target namespace for the deployment
-dockerconfigjson: "eyJhdXRocyI6eyJnaGNyLmlvIjp7InVzZXJuYW1lIjoiYXBpcGluaWMiLCJwYXNzd29yZCI6ImdocF82ZUdvNnRqcXltRHhVdFV2UFgydGF3bmhkVlBjZzkzNDQyTkMiLCJhdXRoIjoiWVhCcGNHbHVhV002WjJod1h6WmxSMjgyZEdweGVXMUVlRlYwVlhaUVdESjBZWGR1YUdSV1VHTm5PVE0wTkRKT1F3PT0ifX19Cg==" # Base64-encoded .dockerconfigjson data
