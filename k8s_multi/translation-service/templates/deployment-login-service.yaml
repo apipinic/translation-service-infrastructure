@@ -20,3 +20,5 @@ spec:
         - containerPort: {{ .Values.loginService.port }}
       imagePullSecrets:
       - name: ghcr-secret
+      nodeSelector:
+        login-service: "true"  # Hier wird der nodeSelector angewendet
