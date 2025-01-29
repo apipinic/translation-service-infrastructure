@@ -62,28 +62,27 @@ jobs:
           wget https://github.com/mikefarah/yq/releases/download/v4.15.1/yq_linux_amd64 -O /usr/local/bin/yq
           chmod +x /usr/local/bin/yq
 
-      - name: Update values.yaml with New Image Tag using yq
+      - name: Update values.yaml for all customers
         run: |
           IMAGE_TAG=$(git rev-parse --short HEAD)  # Commit Hash als Tag
           echo "Using IMAGE_TAG: $IMAGE_TAG"  # Debugging: Print the IMAGE_TAG
 
-          # Debugging: Zeige den aktuellen Inhalt von values.yaml an, bevor wir es ändern
-          echo "Current content of values.yaml:"
-          cat k8s_multi/translation-service/values.yaml
+          # Debugging: Show all customers' values.yaml files
+          echo "Checking values.yaml files in customers directory..."
+          find customers -type f -name "values.yaml"
 
-          # Update values.yaml using yq
-          yq eval ".loginService.image = \"ghcr.io/${{ github.repository_owner }}/login-translation-service:$IMAGE_TAG\"" -i k8s_multi/translation-service/values.yaml
-          yq eval ".translationService.image = \"ghcr.io/${{ github.repository_owner }}/translation-service:$IMAGE_TAG\"" -i k8s_multi/translation-service/values.yaml
+          # Loop through all customer values.yaml files and update them
+          for file in customers/*/values.yaml; do
+            echo "Updating $file..."
+            yq eval ".loginService.image = \"ghcr.io/${{ github.repository_owner }}/login-translation-service:$IMAGE_TAG\"" -i "$file"
+            yq eval ".translationService.image = \"ghcr.io/${{ github.repository_owner }}/translation-service:$IMAGE_TAG\"" -i "$file"
+          done
 
-          # Debugging: Zeige den aktualisierten Inhalt von values.yaml an
-          echo "Updated content of values.yaml after yq:"
-          cat k8s_multi/translation-service/values.yaml
-
-          # Stage the updated values.yaml
-          git add k8s_multi/translation-service/values.yaml
+          # Stage the updated values.yaml files
+          git add customers/*/values.yaml
 
           # Git-Status prüfen
-          echo "Git status after adding the file:"
+          echo "Git status after adding the files:"
           git status
 
           # Set up Git user name and email
@@ -91,7 +90,7 @@ jobs:
           git config --global user.email "actions@github.com"
 
           # Commit the changes
-          git commit -a -m "Update Docker image tag to $IMAGE_TAG" || echo "No changes to commit"
+          git commit -m "Update Docker image tag to $IMAGE_TAG" || echo "No changes to commit"
 
           # Set up git with PAT for pushing changes
           git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}
@@ -100,7 +99,6 @@ jobs:
           echo "Pushing changes to GitHub..."
           git push origin HEAD:main
 
-          # Debugging: Überprüfe den Commit-Log nach dem Push
+          # Debugging: Check the latest commit log
           echo "Git log after push:"
           git log -n 1 --oneline
-
