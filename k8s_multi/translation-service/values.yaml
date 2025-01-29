@@ -5,16 +5,8 @@ loginService:
   replicas: 2
   image: ghcr.io/apipinic/login-translation-service:108c862
   port: 5000
-  nodeSelector: {} # Entfernen oder leer lassen
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: login-service
-                operator: In
-                values:
-                  - "true"
+  nodeSelector:
+    login-service: "true"  
 
 translationService:
   replicas: 2
