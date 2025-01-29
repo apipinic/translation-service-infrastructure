@@ -6,7 +6,7 @@ loginService:
   image: ghcr.io/apipinic/login-translation-service:108c862
   port: 5000
   nodeSelector:
-    beta.kubernetes.io/instance-type: t3.medium
+    login-service: "true"
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
