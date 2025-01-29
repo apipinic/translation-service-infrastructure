@@ -67,7 +67,7 @@ spec:
           type: ClusterIP
   destination:
     server: https://kubernetes.default.svc
-    namespace: kundea
+    namespace: kundeb
   syncPolicy:
     automated:
       prune: true
