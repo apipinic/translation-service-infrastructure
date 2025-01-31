@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kundec
+  namespace: argocd
+spec:
+  project: translation-cloud-multi-tenant
+  source:
+    repoURL: https://github.com/apipinic/translation-service-infrastructure
+    targetRevision: HEAD
+    path: k8s_multi/translation-service
+    helm:
+      valueFiles:
+        - customers/kundec/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kundec
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
