@@ -1,6 +1,6 @@
 namespace: translation-service-a
 ingress:
-  certificateArn: arn:aws:acm:eu-central-1:660242195002:certificate/83cc3b71-7d65-4476-b7b9-516374638473
+  certificateArn: arn:aws:acm:eu-central-1:526290384516:certificate/ecd4b837-5593-4e09-84c8-056283ab2a17
   host: kundea.translation-cloud.at
 loginService:
   replicas: 2 # Number of replicas for login service
