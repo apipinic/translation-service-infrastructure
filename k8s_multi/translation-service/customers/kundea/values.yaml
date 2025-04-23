@@ -1,7 +1,7 @@
 namespace: translation-service-a
 ingress:
   certificateArn: arn:aws:acm:eu-central-1:526290384516:certificate/ecd4b837-5593-4e09-84c8-056283ab2a17
-  host: kundea.translation-cloud.at
+  host: translation.ors-aws.cloud
 loginService:
   replicas: 2 # Number of replicas for login service
   image: ghcr.io/apipinic/login-translation-service:868e63a # Login service image version
