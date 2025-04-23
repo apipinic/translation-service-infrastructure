@@ -9,3 +9,5 @@ application/.DS_Store
 .DS_Store
 .DS_Store
 k8s/argocd-loadbalancer.yaml
+.DS_Store
+k8s_multi/iam-policy.json
