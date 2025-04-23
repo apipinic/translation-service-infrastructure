@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: kundea
+  name: translation-service-a
   namespace: argocd
 spec:
   project: translation-cloud-multi-tenant
@@ -14,7 +14,7 @@ spec:
         - customers/kundea/values.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: kundea
+    namespace: translation-service-a
   syncPolicy:
     automated:
       prune: true
