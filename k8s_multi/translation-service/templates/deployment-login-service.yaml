@@ -21,4 +21,4 @@ spec:
       imagePullSecrets:
       - name: ghcr-secret
       nodeSelector:
-        login-service: "true"  # Hier wird der nodeSelector angewendet
+        eks.amazonaws.com/nodegroup: login-nodegroup

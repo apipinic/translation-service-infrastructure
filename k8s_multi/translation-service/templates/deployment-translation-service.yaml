@@ -22,4 +22,4 @@ spec:
       imagePullSecrets:
       - name: ghcr-secret
       nodeSelector:
-        high-memory: "true"
+        eks.amazonaws.com/nodegroup: translation-nodegroup
