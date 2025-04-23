@@ -11,7 +11,7 @@ translationService:
   image: ghcr.io/apipinic/translation-service:868e63a # Container-Image für den translation service
   port: 5001 # Port für den translation service
 serviceAccount:
-  roleArn: arn:aws:iam::660242195002:role/EKS-DynamoDB-S3-Role # IAM role for service account
+  roleArn: arn:aws:iam::526290384516:role/ALBControllerIRSA # IAM role for service account
 autoscaling:
   enabled: true # Enable auto-scaling
   minReplicas: 2 # Minimum number of replicas
